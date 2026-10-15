@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>중2-2 문제지 생성기</title>
+<style>
+:root{--ink:#1f2937;--soft:#6b7280;--line:#e5e7eb;--acc:#2563eb;--accbg:#eff6ff;--bg:#f3f4f6}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+.app{display:grid;grid-template-columns:340px 1fr;gap:16px;padding:16px;max-width:1280px;margin:0 auto}
+@media(max-width:900px){.app{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h1{font-size:18px;margin:0 0 4px}
+.panel .sub{color:var(--soft);font-size:12.5px;margin-bottom:14px}
+.group{border-top:1px solid var(--line);padding:12px 0}
+.group h2{font-size:13.5px;margin:0 0 8px}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.row label{min-width:58px;color:var(--soft)}
+.row input[type=range]{flex:1}
+.row .val{min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=number],input[type=text],select{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:13px;width:100%}
+input[type=number]{width:80px}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:6px 0 2px;background:var(--line)}
+.bar i{display:block;height:100%}
+.legend{font-size:12px;color:var(--soft)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{background:#f9fafb}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.pri:hover{background:#1d4ed8}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.chip:hover{background:var(--accbg)}
+table.alloc{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+table.alloc th,table.alloc td{border:1px solid var(--line);padding:4px 6px;text-align:center}
+table.alloc th{background:#f9fafb;font-weight:600}
+.note{font-size:12px;color:var(--soft);line-height:1.5}
+.check{display:flex;align-items:center;gap:6px;font-size:13px;margin:5px 0}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:13px}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.preview{overflow:auto}
+.sheet{background:#fff;width:210mm;min-height:297mm;margin:0 auto;padding:14mm 14mm 16mm;box-shadow:0 1px 6px rgba(0,0,0,.12);display:none;color:#000;font-size:11.5pt;line-height:1.55}
+.sheet.show{display:block}
+.sheet header{border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+.sheet .ttl{font-size:17pt;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sheet .meta{display:flex;gap:18px;font-size:10.5pt;margin-top:6px}
+.sheet .meta span{flex:1;border-bottom:1px solid #000;padding-bottom:1px}
+.sheet .meta span.s{flex:.6}
+.sheet .guide{font-size:9pt;color:#444;margin-top:4px}
+.probs{list-style:none;margin:0;padding:0}
+.cols2 .probs{column-count:2;column-gap:10mm;column-rule:1px solid #ccc}
+.prob{break-inside:avoid;page-break-inside:avoid;margin:0 0 6mm;display:flex;gap:6px}
+.prob .no{font-weight:700;min-width:1.9em}
+.prob .body{flex:1}
+.prob .tag{font-size:8pt;border:1px solid #888;border-radius:3px;padding:0 3px;margin-left:4px;color:#444;vertical-align:1px}
+.prob .fig{margin:4px 0}
+.prob .fig svg{width:100%;max-width:200px;height:auto;display:block}
+.prob .space{display:block}
+.ans-list .prob{margin-bottom:3.5mm}
+.ans-list .arow b{color:#b91c1c}
+.ans-list .hint{font-size:9.5pt;color:#555;margin-top:1px}
+var{font-style:italic;font-family:"Times New Roman",Georgia,serif;font-size:1.05em}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.15;font-size:.9em;margin:0 .12em}
+.fr i{font-style:normal;padding:0 .2em}.fr i:first-child{border-bottom:1px solid currentColor}
+.rad{border-top:1px solid currentColor;padding:0 .1em;margin-left:.04em}
+.sys{display:inline-block;vertical-align:middle;border-left:1.5px solid #000;padding-left:6px;line-height:1.6;margin:0 3px}
+sub{font-size:.7em}
+.empty{padding:40px;text-align:center;color:var(--soft)}
+@page{size:A4;margin:13mm 14mm}
+@media print{
+  body{background:#fff}
+  .app{display:block;padding:0;max-width:none}
+  .panel,.tabs,.noprint{display:none!important}
+  .preview{overflow:visible}
+  .sheet{box-shadow:none;margin:0;width:auto;min-height:0;padding:0;display:none}
+  body.print-q #sheetQ{display:block}
+  body.print-a #sheetA{display:block}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel noprint">
+    <h1>중2-2 문제지 생성기</h1>
+    <div class="sub">단원·난이도 비율을 정하면 문제를 무작위로 뽑고, 같은 유형은 숫자를 바꿔 정답도 자동으로 다시 계산합니다.</div>
+
+    <div class="group">
+      <h2>① 문항 수</h2>
+      <div class="row"><label>총 문항</label><input id="total" type="number" min="1" max="60" value="20"><span class="note">1 ~ 60</span></div>
+    </div>
+
+    <div class="group">
+      <h2>② 단원 비율</h2>
+      <div class="row"><label>일차함수</label><input id="uL" type="range" min="0" max="100" value="50"><span class="val" id="uLv"></span></div>
+      <div class="row"><label>닮음·도형</label><input id="uS" type="range" min="0" max="100" value="50"><span class="val" id="uSv"></span></div>
+      <div class="note">두 막대 값의 비율로 계산합니다. (예: 30과 70 → 30% : 70%)</div>
+    </div>
+
+    <div class="group">
+      <h2>③ 난이도 비율</h2>
+      <div class="row"><label>하</label><input id="l0" type="range" min="0" max="100" value="30"><span class="val" id="l0v"></span></div>
+      <div class="row"><label>중</label><input id="l1" type="range" min="0" max="100" value="50"><span class="val" id="l1v"></span></div>
+      <div class="row"><label>상</label><input id="l2" type="range" min="0" max="100" value="20"><span class="val" id="l2v"></span></div>
+      <div class="bar" id="lbar"></div>
+      <div class="legend" id="llegend"></div>
+      <div class="chips" style="margin-top:8px">
+        <span class="chip" data-p="60,30,10">기본다지기 6:3:1</span>
+        <span class="chip" data-p="30,50,20">표준 3:5:2</span>
+        <span class="chip" data-p="10,40,50">심화 1:4:5</span>
+        <span class="chip" data-p="0,0,100">킬러만</span>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>④ 구성 미리보기</h2>
+      <div id="alloc"></div>
+    </div>
+
+    <div class="group">
+      <h2>⑤ 인쇄 옵션</h2>
+      <div class="row"><label>제목</label><input id="title" type="text" value="중2-2 단원평가"></div>
+      <div class="row"><label>정렬</label>
+        <select id="order"><option value="level">난이도 낮은 순</option><option value="unit">단원별로 묶기</option><option value="mix">무작위 순서</option></select></div>
+      <div class="row"><label>단 수</label>
+        <select id="cols"><option value="1">1단</option><option value="2">2단</option></select></div>
+      <div class="row"><label>풀이칸</label>
+        <select id="space"><option value="0">없음</option><option value="25">좁게</option><option value="50" selected>보통</option><option value="80">넓게</option></select></div>
+      <label class="check"><input id="showfig" type="checkbox" checked> 그림 넣기</label>
+      <label class="check"><input id="showtag" type="checkbox" checked> 난이도 표시(하/중/상)</label>
+      <label class="check"><input id="showhint" type="checkbox" checked> 답안지에 풀이 요지 포함</label>
+      <label class="check"><input id="usestar" type="checkbox" checked> 각의 이등분선 정리 문항 포함</label>
+    </div>
+
+    <div class="group">
+      <h2>⑥ 문제 만들기</h2>
+      <div class="row"><label>시험 코드</label><input id="seed" type="number" value="1"></div>
+      <div class="note">같은 코드는 항상 같은 문제·같은 정답을 만듭니다. 문제지와 답안지는 같은 코드로 짝을 이룹니다.</div>
+      <div class="btns">
+        <button class="pri" id="gen">새 문제 뽑기</button>
+        <button id="regen">이 코드로 다시 만들기</button>
+      </div>
+      <div class="btns">
+        <button class="pri" id="pq">문제지 인쇄</button>
+        <button class="pri" id="pa">답안지 인쇄</button>
+      </div>
+      <div class="note" style="margin-top:8px">인쇄 창에서 “머리글·바닥글” 옵션은 끄고, 배율은 100%로 맞추세요. “PDF로 저장”을 고르면 PDF 파일로도 만들 수 있습니다.</div>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="tabs noprint"><div class="tab on" id="tabQ">문제지</div><div class="tab" id="tabA">답안지</div></div>
+    <div class="sheet show" id="sheetQ"></div>
+    <div class="sheet" id="sheetA"></div>
+  </main>
+</div>
+
+<script>
+/* ===== core: rng, fractions, formatting, svg figures ===== */
+let rng = Math.random;
+function setSeed(s) {
+  let a = s >>> 0;
+  rng = function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const ri = (a, b) => a + Math.floor(rng() * (b - a + 1));
+const pick = (a) => a[Math.floor(rng() * a.length)];
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; };
+
+class Fr {
+  constructor(n, d = 1) {
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(n, d) || 1;
+    this.n = n / g; this.d = d / g;
+  }
+  add(o) { o = F(o); return new Fr(this.n * o.d + o.n * this.d, this.d * o.d); }
+  sub(o) { o = F(o); return new Fr(this.n * o.d - o.n * this.d, this.d * o.d); }
+  mul(o) { o = F(o); return new Fr(this.n * o.n, this.d * o.d); }
+  div(o) { o = F(o); return new Fr(this.n * o.d, this.d * o.n); }
+  neg() { return new Fr(-this.n, this.d); }
+  abs() { return new Fr(Math.abs(this.n), this.d); }
+  eq(o) { o = F(o); return this.n === o.n && this.d === o.d; }
+  isInt() { return this.d === 1; }
+  isZero() { return this.n === 0; }
+  val() { return this.n / this.d; }
+  cmp(o) { o = F(o); return this.n * o.d - o.n * this.d; }
+}
+const F = (x, d) => (x instanceof Fr ? x : new Fr(x, d === undefined ? 1 : d));
+
+function fracHtml(n, d) { return '<span class="fr"><i>' + n + '</i><i>' + d + '</i></span>'; }
+function fmtAbs(f) { f = F(f).abs(); return f.d === 1 ? String(f.n) : fracHtml(f.n, f.d); }
+function fmt(f) { f = F(f); return (f.n < 0 ? '−' : '') + fmtAbs(f); }
+const sgn = (f) => (F(f).n < 0 ? ' − ' : ' + ');
+const V = (s) => '<var>' + s + '</var>';
+function M(s) { return s.replace(/§([^§]*)§/g, '<var>$1</var>'); }
+function sqrtH(x) { return '√<span class="rad">' + x + '</span>'; }
+const pt = (x, y) => '(' + fmt(x) + ', ' + fmt(y) + ')';
+const num = (n) => String(n).replace('-', '−');
+
+/* linear expression  m x + b */
+function ex(m, b, v) {
+  v = v || 'x'; m = F(m); b = F(b);
+  let s = '';
+  if (!m.isZero()) {
+    const am = m.abs();
+    s = (m.n < 0 ? '−' : '') + (am.eq(1) ? '' : fmtAbs(am)) + V(v);
+  }
+  if (!b.isZero()) {
+    if (s === '') s = fmt(b); else s += sgn(b) + fmtAbs(b);
+  }
+  return s === '' ? '0' : s;
+}
+const lineEq = (m, b) => V('y') + ' = ' + ex(m, b);
+function lin2(p, q, r) {
+  return (p < 0 ? '−' : '') + (Math.abs(p) === 1 ? '' : Math.abs(p)) + V('x') +
+    (q < 0 ? ' − ' : ' + ') + (Math.abs(q) === 1 ? '' : Math.abs(q)) + V('y') + ' = ' + fmt(r);
+}
+function decStr(x) { return String(Number(x.toFixed(6))); }
+
+/* ===== SVG figure builder ===== */
+function fig(o) {
+  const W = o.w || 230, H = o.h || 175, m = 26;
+  const pts = o.pts;
+  const R = (n) => (typeof n === 'string' ? pts[n] : n);
+  const all = Object.keys(pts).map((k) => pts[k]);
+  (o.circles || []).forEach((c) => { const p = R(c.c); all.push([p[0] - c.r, p[1] - c.r], [p[0] + c.r, p[1] + c.r]); });
+  const xs = all.map((p) => p[0]), ys = all.map((p) => p[1]);
+  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+  const bw = maxx - minx || 1, bh = maxy - miny || 1;
+  const s = Math.min((W - 2 * m) / bw, (H - 2 * m) / bh);
+  const ox = (W - bw * s) / 2, oy = (H - bh * s) / 2;
+  const X = (p) => ox + (p[0] - minx) * s, Y = (p) => H - oy - (p[1] - miny) * s;
+  const f1 = (v) => v.toFixed(1);
+  let out = '';
+  const poly = (names) => names.map((n) => { const p = R(n); return f1(X(p)) + ',' + f1(Y(p)); }).join(' ');
+  (o.fills || []).forEach((f) => { out += '<polygon points="' + poly(f.p) + '" fill="' + (f.c || '#dbeafe') + '" stroke="none"/>'; });
+  (o.circles || []).forEach((c) => {
+    const p = R(c.c);
+    out += '<circle cx="' + f1(X(p)) + '" cy="' + f1(Y(p)) + '" r="' + f1(c.r * s) + '" fill="none" stroke="' + (c.color || '#6b7280') + '" stroke-width="1"' + (c.dash ? ' stroke-dasharray="4 3"' : '') + '/>';
+  });
+  (o.polys || []).forEach((pl) => { out += '<polygon points="' + poly(pl) + '" fill="none" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>'; });
+  (o.segs || []).forEach((sg) => {
+    const a = R(sg[0]), b = R(sg[1]), st = sg[2] || '';
+    let attr = 'stroke="#111" stroke-width="1.1"';
+    if (st.indexOf('b') >= 0) attr = 'stroke="#2563eb" stroke-width="1.8"';
+    if (st.indexOf('d') >= 0) attr += ' stroke-dasharray="4 3"';
+    if (st.indexOf('g') >= 0) attr = 'stroke="#9ca3af" stroke-width="1" stroke-dasharray="3 3"';
+    out += '<line x1="' + f1(X(a)) + '" y1="' + f1(Y(a)) + '" x2="' + f1(X(b)) + '" y2="' + f1(Y(b)) + '" ' + attr + '/>';
+  });
+  (o.rights || []).forEach((r) => {
+    const v = R(r[0]), a = R(r[1]), b = R(r[2]);
+    const vx = X(v), vy = Y(v);
+    let ax = X(a) - vx, ay = Y(a) - vy, bx = X(b) - vx, by = Y(b) - vy;
+    const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by); const k = 9;
+    ax = ax / la * k; ay = ay / la * k; bx = bx / lb * k; by = by / lb * k;
+    out += '<path d="M' + f1(vx + ax) + ',' + f1(vy + ay) + ' L' + f1(vx + ax + bx) + ',' + f1(vy + ay + by) + ' L' + f1(vx + bx) + ',' + f1(vy + by) + '" fill="none" stroke="#111" stroke-width="1"/>';
+  });
+  // labels
+  const pxs = Object.keys(pts).map((k) => [X(pts[k]), Y(pts[k])]);
+  const cx = pxs.reduce((a, p) => a + p[0], 0) / pxs.length, cy = pxs.reduce((a, p) => a + p[1], 0) / pxs.length;
+  const hide = o.hide || [], inner = o.inner || [], off = o.off || {};
+  Object.keys(pts).forEach((n) => {
+    const px = X(pts[n]), py = Y(pts[n]);
+    out += '<circle cx="' + f1(px) + '" cy="' + f1(py) + '" r="1.9" fill="#111"/>';
+    if (hide.indexOf(n) >= 0) return;
+    let dx, dy;
+    if (off[n]) { dx = off[n][0]; dy = off[n][1]; }
+    else if (inner.indexOf(n) >= 0) { dx = 8; dy = -8; }
+    else {
+      let vx = px - cx, vy = py - cy; const L = Math.hypot(vx, vy) || 1;
+      dx = vx / L * 12; dy = vy / L * 12;
+    }
+    const mm = /^([A-Z])(\d+)$/.exec(n);
+    const nm = mm ? mm[1] + '<tspan font-size="8" dy="3">' + mm[2] + '</tspan>' : n;
+    out += '<text x="' + f1(px + dx) + '" y="' + f1(py + dy + 4) + '" text-anchor="middle" font-size="12" font-style="italic" font-family="Georgia,serif" fill="#111">' + nm + '</text>';
+  });
+  (o.edges || []).forEach((e) => {
+    const a = R(e[0]), b = R(e[1]); const side = e[3] === undefined ? 1 : e[3];
+    const dxm = b[0] - a[0], dym = b[1] - a[1]; const L = Math.hypot(dxm, dym) || 1;
+    const nx = -dym / L, ny = dxm / L;
+    const mx = (X(a) + X(b)) / 2 + nx * side * 12, my = (Y(a) + Y(b)) / 2 - ny * side * 12;
+    out += '<text x="' + f1(mx) + '" y="' + f1(my + 4) + '" text-anchor="middle" font-size="11" fill="#2563eb">' + e[2] + '</text>';
+  });
+  (o.notes || []).forEach((n) => {
+    const p = R(n[0]);
+    out += '<text x="' + f1(X(p) + (n[2] || 0)) + '" y="' + f1(Y(p) + (n[3] || 0) + 4) + '" text-anchor="middle" font-size="11" fill="' + (n[4] || '#2563eb') + '">' + n[1] + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' + out + '</svg>';
+}
+
+/* cone figure (apex down), water fraction */
+function coneFig(frac, label) {
+  const W = 230, H = 175; const cx = 80, top = 38, r = 52, h = 110;
+  let o = '';
+  o += '<ellipse cx="' + cx + '" cy="' + top + '" rx="' + r + '" ry="' + r * 0.26 + '" fill="none" stroke="#111" stroke-width="1.4"/>';
+  o += '<line x1="' + (cx - r) + '" y1="' + top + '" x2="' + cx + '" y2="' + (top + h) + '" stroke="#111" stroke-width="1.4"/>';
+  o += '<line x1="' + (cx + r) + '" y1="' + top + '" x2="' + cx + '" y2="' + (top + h) + '" stroke="#111" stroke-width="1.4"/>';
+  if (frac) {
+    const wy = top + h * (1 - frac), wr = r * frac;
+    o += '<ellipse cx="' + cx + '" cy="' + wy.toFixed(1) + '" rx="' + wr.toFixed(1) + '" ry="' + (wr * 0.26).toFixed(1) + '" fill="#dbeafe" stroke="#2563eb" stroke-width="1.2"/>';
+    o += '<line x1="' + cx + '" y1="' + (top + h) + '" x2="' + cx + '" y2="' + wy.toFixed(1) + '" stroke="#9ca3af" stroke-dasharray="3 3"/>';
+  }
+  if (label) o += '<text x="' + (cx + r + 12) + '" y="' + (top + h * 0.55) + '" font-size="11" fill="#2563eb">' + label + '</text>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' + o + '</svg>';
+}
+
+/* geometry helpers */
+const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+const mid = (p, q) => lerp(p, q, 0.5);
+function inter(p1, p2, p3, p4) {
+  const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3, [x4, y4] = p4;
+  const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  const a = x1 * y2 - y1 * x2, b = x3 * y4 - y3 * x4;
+  return [(a * (x3 - x4) - (x1 - x2) * b) / d, (a * (y3 - y4) - (y1 - y2) * b) / d];
+}
+function foot(p, a, b) {
+  const abx = b[0] - a[0], aby = b[1] - a[1];
+  const t = ((p[0] - a[0]) * abx + (p[1] - a[1]) * aby) / (abx * abx + aby * aby);
+  return lerp(a, b, t);
+}
+const TRI = { A: [2, 7], B: [0, 0], C: [9, 0] };
+const TRIPLES = [[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15], [12, 16, 20]];
+function triple() { const t = pick(TRIPLES); return pick([true, false]) ? [t[0], t[1], t[2]] : [t[1], t[0], t[2]]; }
+function trapPts(a, b) { // AD=a (top), BC=b (bottom), scaled picture
+  const k = 8 / Math.max(a, b); const h = 4.2;
+  const bw = b * k, aw = a * k, off = (bw - aw) / 2 + pick([-0.6, 0, 0.6]);
+  return { A: [off, h], D: [off + aw, h], B: [0, 0], C: [bw, 0] };
+}
+
+/* ===== problem bank =====
+   u: 'L' 일차함수, 'S' 닮음/도형 ; lv: 0 하, 1 중, 2 상
+   g() -> { q, a, h (풀이 요지), svg (그림), p (검산용 파라미터) } */
+const BANK = [];
+function def(id, u, lv, g, extra) { BANK.push(Object.assign({ id, u, lv, g }, extra || {})); }
+
+const nz = (a, b) => { let v = 0; while (v === 0) v = ri(a, b); return v; };
+
+/* ================= 일차함수 · 하 ================= */
+def('L-E1', 'L', 0, () => {
+  const x1 = ri(-4, 4), y1 = ri(-5, 5), dx = ri(1, 4), dy = nz(-6, 6);
+  const x2 = x1 + dx, y2 = y1 + dy, m = F(dy, dx), b = F(y1).sub(m.mul(x1));
+  return { q: '두 점 ' + pt(x1, y1) + ', ' + pt(x2, y2) + '를 지나는 직선의 방정식을 구하시오.',
+    a: lineEq(m, b), h: '기울기 = ' + fmt(m), p: { x1, y1, x2, y2, m, b } };
+});
+
+def('L-E2', 'L', 0, () => {
+  const m = F(pick([1, 2, 3, 4, 5, -1, -2, -3, -4, -5])), b = nz(-8, 8);
+  const xi = F(-b).div(m);
+  const area = F(b * b).div(m.abs().mul(2));
+  return { q: '일차함수 ' + lineEq(m, b) + '의 그래프와 ' + V('x') + '축, ' + V('y') + '축으로 둘러싸인 삼각형의 넓이를 구하시오.',
+    a: fmt(area), h: V('x') + '절편 ' + fmt(xi) + ', ' + V('y') + '절편 ' + fmt(b), p: { m, b, area } };
+});
+
+def('L-E3', 'L', 0, () => {
+  const a = F(nz(-4, 4)), b = nz(-6, 6), p = nz(-4, 4), q = nz(-4, 4);
+  const nb = F(b).sub(a.mul(p)).add(q);
+  return { q: '일차함수 ' + lineEq(a, b) + '의 그래프를 ' + V('x') + '축의 방향으로 ' + fmt(p) + '만큼, ' + V('y') + '축의 방향으로 ' + fmt(q) +
+      '만큼 평행이동한 그래프의 식을 구하시오.',
+    a: lineEq(a, nb), h: V('y') + ' = ' + fmt(a) + '(' + V('x') + (p < 0 ? ' + ' : ' − ') + Math.abs(p) + ') ' + (b < 0 ? '− ' : '+ ') + Math.abs(b) + (q < 0 ? ' − ' : ' + ') + Math.abs(q), p: { a, b, p, q, nb } };
+});
+
+def('L-E4', 'L', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const x0 = nz(-4, 4), y0 = ri(-6, 6), m1 = nz(-4, 4), m2 = nz(-4, 4);
+    if (m1 === m2) continue;
+    const b1 = y0 - m1 * x0, b2 = y0 - m2 * x0;
+    if (b1 === b2) continue;
+    const area = F(Math.abs(b1 - b2) * Math.abs(x0), 2);
+    return { q: '두 일차함수 ' + lineEq(m1, b1) + ', ' + lineEq(m2, b2) + '의 그래프와 ' + V('y') + '축으로 둘러싸인 삼각형의 넓이를 구하시오.',
+      a: fmt(area), h: '교점 ' + pt(x0, y0) + ', ' + V('y') + '절편의 차 ' + Math.abs(b1 - b2), p: { m1, b1, m2, b2, area },
+      svg: null };
+  }
+});
+
+def('L-E5', 'L', 0, () => {
+  const m = F(nz(-4, 4), pick([1, 1, 2])), c = nz(-5, 5), p = nz(-4, 4), q = nz(-5, 5);
+  const nb = F(q).sub(m.mul(p));
+  return { q: '직선 ' + lineEq(m, c) + '에 평행하고 점 ' + pt(p, q) + '를 지나는 직선의 방정식을 구하시오.',
+    a: lineEq(m, nb), h: '기울기가 같다 → ' + fmt(m), p: { m, c, p, q, nb } };
+});
+
+def('L-E6', 'L', 0, () => {
+  const p = nz(-4, 4), q = nz(-4, 4), r = nz(-9, 9), k = pick([2, 3, -2, -1, 4]);
+  const A = k * p, Mv = k * r;
+  return { q: '연립방정식 ' + '<span class="sys">' + lin2(p, q, r) + '<br>' + V('a') + V('x') + (k * q < 0 ? ' − ' : ' + ') + (Math.abs(k * q) === 1 ? '' : Math.abs(k * q)) + V('y') + ' = ' + V('m') + '</span>' +
+      '의 해가 무수히 많을 때, 상수 ' + V('a') + ', ' + V('m') + '의 값을 구하시오.',
+    a: V('a') + ' = ' + fmt(A) + ', ' + V('m') + ' = ' + fmt(Mv), h: '두 식이 일치: 한 식에 ' + fmt(k) + '을 곱한 꼴', p: { p, q, r, k, A, Mv } };
+});
+
+def('L-E7', 'L', 0, () => {
+  const p = ri(1, 5), q = nz(-6, 6);
+  return { q: '일차함수 ' + V('y') + ' = ' + V('k') + V('x') + ' − ' + (p === 1 ? '' : p) + V('k') + (q < 0 ? ' − ' : ' + ') + Math.abs(q) + '의 그래프가 ' + V('k') + '의 값에 관계없이 항상 지나는 점의 좌표를 구하시오.',
+    a: pt(p, q), h: V('y') + ' = ' + V('k') + '(' + V('x') + ' − ' + p + ') ' + (q < 0 ? '− ' : '+ ') + Math.abs(q), p: { p, q } };
+});
+
+def('L-E8', 'L', 0, () => {
+  const r = ri(2, 5), c0 = ri(1, 9), t1 = ri(2, 5), t2 = t1 + ri(2, 4), T = ri(t2 + 3, t2 + 12);
+  const h1 = r * t1 + c0, h2 = r * t2 + c0, H = r * T + c0;
+  return { q: '물통에 물을 매분 일정한 양씩 넣는다. 물을 넣기 시작한 지 ' + t1 + '분 후의 수면의 높이는 ' + h1 + ' cm, ' + t2 + '분 후의 수면의 높이는 ' + h2 + ' cm였다. 수면의 높이가 ' + H + ' cm가 되는 것은 물을 넣기 시작한 지 몇 분 후인가?',
+    a: T + '분 후', h: V('y') + ' = ' + r + V('x') + ' + ' + c0, p: { r, c0, t1, t2, h1, h2, H, T } };
+});
+
+def('L-E9', 'L', 0, () => {
+  const n = ri(1, 4), m = n + ri(2, 6);
+  return { q: '일차함수 ' + V('y') + ' = (' + V('a') + ' − ' + m + ')' + V('x') + ' + ' + V('a') + ' − ' + n + '의 그래프가 제3사분면을 지나지 않도록 하는 정수 ' + V('a') + '의 개수를 구하시오.',
+    a: (m - n + 1) + '개', h: '기울기 ' + V('a') + ' − ' + m + ' ≤ 0, ' + V('y') + '절편 ' + V('a') + ' − ' + n + ' ≥ 0 → ' + n + ' ≤ ' + V('a') + ' ≤ ' + m, p: { m, n, cnt: m - n + 1 } };
+});
+
+def('L-E10', 'L', 0, () => {
+  const a = ri(2, 6), b = ri(2, 8), al = ri(1, 3), be = nz(-3, 3);
+  const va = al * a, vb = be * b, mx = Math.max(va, vb);
+  const slope = F(-b, a);
+  return { q: '일차함수 ' + lineEq(slope, b) + '의 그래프가 ' + V('x') + '축, ' + V('y') + '축과 만나는 점을 각각 A, B라 하자. 점 P(' + V('x') + ', ' + V('y') + ')가 선분 AB 위를 움직일 때, ' +
+      (al === 1 ? '' : al) + V('x') + (be < 0 ? ' − ' : ' + ') + (Math.abs(be) === 1 ? '' : Math.abs(be)) + V('y') + '의 최댓값을 구하시오.',
+    a: String(mx).replace('-', '−'), h: 'A' + pt(a, 0) + ', B' + pt(0, b) + ' 에서의 값 ' + num(va) + ', ' + num(vb) + ' 중 큰 값', p: { a, b, al, be, mx } };
+});
+
+def('L-E11', 'L', 0, () => {
+  const mx = ri(-3, 3), my = ri(-4, 4), hx = ri(1, 4), hy = nz(-5, 5), s = nz(-4, 4);
+  const p1 = [mx - hx, my - hy], p2 = [mx + hx, my + hy];
+  const nb = my - s * mx;
+  return { q: '두 점 ' + pt(p1[0], p1[1]) + ', ' + pt(p2[0], p2[1]) + '을 이은 선분의 중점을 지나고 기울기가 ' + fmt(s) + '인 직선의 방정식을 구하시오.',
+    a: lineEq(s, nb), h: '중점 ' + pt(mx, my), p: { mx, my, s, nb } };
+});
+
+/* ================= 일차함수 · 중 ================= */
+def('L-M1', 'L', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const x0 = nz(-4, 4), y0 = nz(-6, 6), m1 = nz(-3, 3), m2 = nz(-3, 3);
+    if (m1 === m2) continue;
+    const b1 = y0 - m1 * x0, b2 = y0 - m2 * x0;
+    if (b1 === 0 || b2 === 0) continue;
+    const c = F(y0, x0);
+    if (c.eq(m1) || c.eq(m2)) continue;
+    const sum = c.add(m1).add(m2);
+    return { q: '세 직선 ' + lineEq(m1, b1) + ', ' + lineEq(m2, b2) + ', ' + V('y') + ' = ' + V('a') + V('x') + '가 삼각형을 이루지 않도록 하는 모든 상수 ' + V('a') + '의 값의 합을 구하시오.',
+      a: fmt(sum), h: '교점 ' + pt(x0, y0) + '을 지날 때 ' + V('a') + ' = ' + fmt(c) + ', 평행할 때 ' + V('a') + ' = ' + fmt(m1) + ', ' + fmt(m2), p: { x0, y0, m1, b1, m2, b2, sum } };
+  }
+});
+
+def('L-M2', 'L', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const p = ri(1, 5), q = p + 2 * ri(1, 4);
+    const xi = (q - p) / 2, yi = (q + p) / 2;
+    const area = F(q * yi + xi * p, 2);
+    return { q: '두 직선 ' + lineEq(1, p) + ', ' + lineEq(-1, q) + ' 및 두 좌표축으로 둘러싸인 도형(사각형)의 넓이를 구하시오.',
+      a: fmt(area), h: '교점 ' + pt(xi, yi) + ', 꼭짓점 O(0, 0), ' + pt(q, 0) + ', ' + pt(xi, yi) + ', ' + pt(0, p), p: { p, q, area },
+      svg: fig({ pts: { O: [0, 0], X1: [q, 0], P: [xi, yi], Y1: [0, p] }, fills: [{ p: ['O', 'X1', 'P', 'Y1'] }], polys: [['O', 'X1', 'P', 'Y1']], hide: ['X1', 'Y1', 'P'], notes: [['X1', q, 0, 14], ['Y1', p, -12, 0], ['P', '(' + xi + ', ' + yi + ')', 18, -10]] }) };
+  }
+});
+
+def('L-M3', 'L', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const x0 = nz(-4, 4), y0 = ri(-5, 6), m1 = nz(-3, 3), m2 = nz(-3, 3);
+    if (m1 === m2) continue;
+    const b1 = y0 - m1 * x0, b2 = y0 - m2 * x0;
+    const m3 = F(nz(-4, 4), pick([1, 2]));
+    const nb = F(y0).sub(m3.mul(x0));
+    return { q: '두 직선 ' + lineEq(m1, b1) + ', ' + lineEq(m2, b2) + '의 교점을 지나고 직선 ' + lineEq(m3, ri(1, 5)) + '에 평행한 직선의 방정식을 구하시오.',
+      a: lineEq(m3, nb), h: '교점 ' + pt(x0, y0), p: { x0, y0, m3, nb } };
+  }
+});
+
+function interceptGen(big) {
+  return () => {
+    for (let t = 0; t < 500; t++) {
+      const a = big ? ri(8, 24) : ri(4, 12), b = big ? ri(8, 24) : ri(3, 12);
+      const cand = [];
+      for (let p = 1; p < a; p++) { if ((p * b) % a === 0) cand.push([p, b - (p * b) / a]); }
+      if (!cand.length) continue;
+      const [p, q] = pick(cand);
+      if (q < 1) continue;
+      const S2 = a * b;
+      // uniqueness of (a,b) among positive integer pairs with a*b = S2 through (p,q)
+      let cnt = 0;
+      for (let aa = 1; aa <= S2; aa++) {
+        if (S2 % aa) continue; const bb = S2 / aa;
+        if (aa > p && bb > q && p * bb + q * aa === aa * bb) cnt++;
+      }
+      if (cnt !== 1) continue;
+      const area = S2 / 2;
+      return { q: '점 ' + pt(p, q) + '를 지나고 ' + V('x') + '절편, ' + V('y') + '절편이 모두 양의 정수이며 두 좌표축과 이루는 삼각형의 넓이가 ' + area + '인 직선의 방정식을 구하시오.',
+        a: lineEq(F(-b, a), b), h: V('x') + '절편 ' + a + ', ' + V('y') + '절편 ' + b + ' (' + a + '·' + b + ' = ' + S2 + ')', p: { a, b, p, q, area } };
+    }
+  };
+}
+def('L-M4', 'L', 1, interceptGen(false));
+
+def('L-M5', 'L', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const p = ri(2, 7), q = ri(2, 7); if (p === q || gcd(p, q) > 1) continue;
+    const N = ri(30, 90);
+    const sols = [];
+    for (let x = 1; x * p < N; x++) { const r = N - p * x; if (r > 0 && r % q === 0) sols.push([x, r / q]); }
+    if (sols.length < 2 || sols.length > 6) continue;
+    return { q: '일차방정식 ' + p + V('x') + ' + ' + q + V('y') + ' = ' + N + '의 그래프 위의 점 중 ' + V('x') + '좌표, ' + V('y') + '좌표가 모두 양의 정수인 점의 개수를 구하시오.',
+      a: sols.length + '개', h: sols.map((s) => pt(s[0], s[1])).join(', '), p: { p, q, N, n: sols.length } };
+  }
+});
+
+def('L-M6', 'L', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const v1 = pick([40, 50, 60, 70, 80]), v2 = v1 + pick([20, 30, 40, 50]), t0 = pick([5, 10, 15, 20]);
+    if ((v1 * t0) % (v2 - v1)) continue;
+    const T = (v1 * t0) / (v2 - v1);
+    return { q: '지수가 집에서 분속 ' + v1 + ' m로 걸어서 출발하고, ' + t0 + '분 후 오빠가 같은 길을 분속 ' + v2 + ' m로 자전거를 타고 뒤따라간다. 오빠가 출발한 지 몇 분 후에 지수를 따라잡는가?',
+      a: T + '분 후', h: v1 + '(' + V('x') + ' + ' + t0 + ') = ' + v2 + V('x'), p: { v1, v2, t0, T } };
+  }
+});
+
+def('L-M7', 'L', 1, () => {
+  const a = pick([40, 50, 60, 70]), b = pick([30, 40, 50, 80]), T = ri(6, 20);
+  const D = (a + b) * T;
+  return { q: '현준이는 집에서 분속 ' + a + ' m로 학교를 향해 걷고, 같은 시각에 친구는 집에서 ' + D + ' m 떨어진 학교에서 분속 ' + b + ' m로 집을 향해 걷는다. 두 사람이 만나는 것은 출발한 지 몇 분 후이며, 그 지점은 집에서 몇 m 떨어진 곳인가?',
+    a: T + '분 후, 집에서 ' + (a * T) + ' m', h: a + V('x') + ' = ' + D + ' − ' + b + V('x'), p: { a, b, D, T } };
+});
+
+def('L-M8', 'L', 1, () => {
+  const p = ri(1, 5), q = ri(1, 4), r = nz(-5, 5);
+  const py = p * q + r, kk = F(-r, q);
+  return { q: '일차함수 ' + V('y') + ' = (' + V('k') + ' − ' + p + ')' + V('x') + ' + ' + (q === 1 ? '' : q) + V('k') + (r < 0 ? ' − ' : ' + ') + Math.abs(r) + '의 그래프가 ' + V('k') + '의 값에 관계없이 항상 지나는 점 P의 좌표와, 이 그래프가 원점을 지날 때의 ' + V('k') + '의 값을 구하시오.',
+    a: 'P' + pt(-q, py) + ', ' + V('k') + ' = ' + fmt(kk), h: V('y') + ' = ' + V('k') + '(' + V('x') + ' + ' + q + ') − ' + p + V('x') + (r < 0 ? ' − ' : ' + ') + Math.abs(r), p: { p, q, r, px: -q, py, kk } };
+});
+
+def('L-M9', 'L', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const b = ri(3, 8), c = ri(1, 4); if ((b + c) % 2) continue;
+    const d = 2 * ri(1, 3), tt = ri(4, 9);
+    const s = F(d / 2 - tt).div(F(b + c, 2));
+    const A = [0, 0], B = [b, 0], C = [b + c, d], D = [c, d];
+    return { q: '평행사변형 ABCD의 꼭짓점의 좌표가 A(0, 0), B(' + b + ', 0), C(' + (b + c) + ', ' + d + '), D(' + c + ', ' + d + ')이다. 점 ' + pt(0, tt) + '를 지나고 평행사변형 ABCD의 넓이를 이등분하는 직선의 방정식을 구하시오.',
+      a: lineEq(s, tt), h: '두 대각선의 교점(중심) ' + pt(F(b + c, 2), F(d, 2)) + '을 지난다', p: { b, c, d, tt, s },
+      svg: fig({ pts: { A, B, C, D, O: [(b + c) / 2, d / 2], T: [0, tt] }, polys: [['A', 'B', 'C', 'D']], segs: [['T', 'O', 'b']], hide: ['O'], inner: [] }) };
+  }
+});
+
+def('L-M10', 'L', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const b = ri(4, 10), c = ri(-3, 6), d = ri(3, 8); if (b + c === 0) continue;
+    const s = F(d, b + c);
+    return { q: '세 점 A(0, 0), B(' + b + ', 0), C(' + fmt(c) + ', ' + d + ')을 꼭짓점으로 하는 삼각형 ABC에서 점 A를 지나고 삼각형 ABC의 넓이를 이등분하는 직선의 방정식을 구하시오.',
+      a: lineEq(s, 0), h: '변 BC의 중점 ' + pt(F(b + c, 2), F(d, 2)) + '을 지난다', p: { b, c, d, s },
+      svg: fig({ pts: { A: [0, 0], B: [b, 0], C: [c, d], N: [(b + c) / 2, d / 2] }, polys: [['A', 'B', 'C']], segs: [['A', 'N', 'b']], hide: ['N'] }) };
+  }
+});
+
+def('L-M11', 'L', 1, () => {
+  const [u, v, w] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [6, 8, 10], [8, 6, 10]]);
+  const t = ri(1, 2), dx = u * t, dy = v * t;
+  const a2 = ri(1, dy - 1), b2 = dy - a2, a1 = ri(0, 3);
+  const A = [a1, a2], B = [a1 + dx, b2];
+  return { q: '두 점 A' + pt(A[0], A[1]) + ', B' + pt(B[0], B[1]) + '와 ' + V('x') + '축 위의 점 P에 대하여 선분 AP와 선분 PB의 길이의 합 AP + PB의 최솟값을 구하시오.',
+    a: String(w * t), h: 'A를 ' + V('x') + '축에 대칭이동한 점 ' + pt(A[0], -A[1]) + '과 B 사이의 거리', p: { A, B, ans: w * t } };
+});
+
+def('L-M12', 'L', 1, () => {
+  const [a, b, c] = triple(); const k = pick([1, 1, 2]);
+  const A = a * k, B = b * k, C = c * k;
+  const r = F(A + B - C, 2);
+  return { q: '세 직선 ' + V('x') + ' = 0, ' + V('y') + ' = 0, ' + B + V('x') + ' + ' + A + V('y') + ' = ' + (A * B) + '로 둘러싸인 삼각형의 내접원의 반지름과 내심의 좌표, 외심의 좌표를 구하시오.',
+    a: '반지름 ' + fmt(r) + ', 내심 ' + pt(r, r) + ', 외심 ' + pt(F(A, 2), F(B, 2)), h: '직각삼각형: ' + V('r') + ' = (' + A + ' + ' + B + ' − ' + C + ') ÷ 2, 외심은 빗변의 중점', p: { A, B, C, r },
+    svg: fig({ pts: { O: [0, 0], X1: [A, 0], Y1: [0, B], I: [r.val(), r.val()] }, polys: [['O', 'X1', 'Y1']], circles: [{ c: 'I', r: r.val(), color: '#2563eb' }], hide: ['I', 'X1', 'Y1'], rights: [['O', 'X1', 'Y1']], notes: [['X1', A, 0, 14], ['Y1', B, -12, 0]] }) };
+});
+
+/* ================= 일차함수 · 상 ================= */
+def('L-H1', 'L', 2, () => {
+  const p = ri(1, 4), q = ri(p + 1, 8), h = ri(2, 9);
+  const a = F((p + q) * h, q * (q - p));
+  return { q: '세 점 A(0, ' + h + '), B(−' + p + ', 0), C(' + q + ', 0)을 꼭짓점으로 하는 삼각형 ABC의 넓이를 이등분하는 직선 ' + V('y') + ' = ' + V('a') + V('x') + ' (' + V('a') + ' > 0)에서 ' + V('a') + '의 값을 구하시오.',
+    a: fmt(a), h: '직선이 AC와 만나는 점을 P라 하면 △OCP = 삼각형 ABC의 ½', p: { p, q, h, a },
+    svg: fig({ pts: { A: [0, h], B: [-p, 0], C: [q, 0], O: [0, 0] }, polys: [['A', 'B', 'C']], hide: ['O'], notes: [['O', 'O', -9, 14, '#111']] }) };
+});
+
+def('L-H2', 'L', 2, () => {
+  const m = pick([2, 3]), c1 = ri(0, 3), c2 = c1 + ri(2, 6), d1 = ri(0, 3), d2 = d1 + ri(3, 8);
+  const area = F((c2 - c1) * (d2 - d1) * m, 1 + m * m);
+  const sl = F(-1, m);
+  return { q: '네 직선 ' + lineEq(m, c1) + ', ' + lineEq(m, c2) + ', ' + lineEq(sl, d1) + ', ' + lineEq(sl, d2) + '로 둘러싸인 도형의 넓이를 구하시오.',
+    a: fmt(area), h: '서로 수직인 두 쌍의 평행선 → 직사각형. 네 교점의 좌표를 구하고 피타고라스 정리로 두 변의 길이를 구한다', p: { m, c1, c2, d1, d2, area } };
+});
+
+def('L-H3', 'L', 2, () => {
+  for (let t = 0; t < 400; t++) {
+    const a = pick([3, 5, 7, 4, 6]), b = pick([4, 5, 7, 8, 9]); if (a === b || gcd(a, b) > 1) continue;
+    const N = ri(60, 140);
+    const sols = [];
+    for (let x = 1; a * x < N; x++) { const r = N - a * x; if (r > 0 && r % b === 0) sols.push([x, r / b]); }
+    if (sols.length < 3 || sols.length > 6) continue;
+    const best = sols.reduce((m2, s) => Math.max(m2, s[0] + s[1]), 0);
+    return { q: '일차방정식 ' + a + V('x') + ' + ' + b + V('y') + ' = ' + N + '에서 ' + V('x') + ', ' + V('y') + '가 모두 양의 정수인 순서쌍 (' + V('x') + ', ' + V('y') + ')의 개수와, 그중 ' + V('x') + ' + ' + V('y') + '의 최댓값을 구하시오.',
+      a: sols.length + '개, 최댓값 ' + best, h: sols.map((s) => pt(s[0], s[1])).join(', '), p: { a, b, N, n: sols.length, best } };
+  }
+});
+
+def('L-H4', 'L', 2, () => {
+  const a = ri(5, 14), b = ri(5, 14), g = gcd(a, b);
+  const I = (a * b - a - b - g + 2) / 2;
+  return { q: '좌표평면 위의 세 점 O(0, 0), A(' + a + ', 0), B(0, ' + b + ')을 꼭짓점으로 하는 삼각형 OAB의 내부(경계는 제외)에 있는 점 중 ' + V('x') + '좌표, ' + V('y') + '좌표가 모두 정수인 점의 개수를 구하시오.',
+    a: I + '개', h: '직선 AB 아래쪽의 점을 ' + V('x') + ' = 1, 2, …, ' + (a - 1) + '별로 센다', p: { a, b, I },
+    svg: fig({ pts: { O: [0, 0], A: [a, 0], B: [0, b] }, fills: [{ p: ['O', 'A', 'B'] }], polys: [['O', 'A', 'B']] }) };
+});
+
+def('L-H5', 'L', 2, () => {
+  const p = ri(1, 4), q = ri(5, 8), ra = ri(1, 3), da = ri(1, 5), rb = ri(1, 4), db = ri(1, 4);
+  const A = [p - ra, q - da], B = [p + rb, q - db];
+  const sA = F(da, ra), sB = F(-db, rb);
+  return { q: '점 A' + pt(A[0], A[1]) + ', B' + pt(B[0], B[1]) + '에 대하여 일차함수 ' + V('y') + ' = ' + V('k') + V('x') + ' − ' + (p === 1 ? '' : p) + V('k') + ' + ' + q + '의 그래프가 선분 AB와 만나도록 하는 ' + V('k') + '의 값의 범위를 구하시오.',
+    a: V('k') + ' ≤ ' + fmt(sB) + ' 또는 ' + V('k') + ' ≥ ' + fmt(sA), h: '정점 P' + pt(p, q) + '를 지난다. 직선 PA의 기울기 ' + fmt(sA) + ', 직선 PB의 기울기 ' + fmt(sB), p: { p, q, A, B, sA, sB },
+    svg: fig({ pts: { P: [p, q], A, B }, segs: [['A', 'B'], ['P', 'A', 'd'], ['P', 'B', 'd']], hide: [] }) };
+});
+
+def('L-H6', 'L', 2, () => {
+  const m = ri(2, 5), n = ri(3, 6);
+  const cnt = m * (7 - n);
+  const pr = F(cnt, 36);
+  return { q: '주사위를 두 번 던져서 나온 눈의 수를 차례로 ' + V('a') + ', ' + V('b') + '라 하자. 일차함수 ' + V('y') + ' = (' + V('a') + ' − ' + m + ')' + V('x') + ' + ' + V('b') + ' − ' + n + '의 그래프가 제3사분면을 지나지 않을 확률을 구하시오.',
+    a: fmt(pr), h: V('a') + ' ≤ ' + m + ' (' + m + '가지), ' + V('b') + ' ≥ ' + n + ' (' + (7 - n) + '가지) → ' + cnt + '/36', p: { m, n, cnt, pr } };
+});
+
+def('L-H7', 'L', 2, () => {
+  const a = ri(2, 4), b = ri(1, 4);
+  let reg = a + 1; for (let j = 0; j < b; j++) reg += a + j + 1;
+  return { q: '좌표평면 위에 서로 평행한 직선 ' + a + '개를 포함하여 서로 다른 직선 ' + (a + b) + '개를 그었다. 나머지 ' + b + '개의 직선은 서로 평행하지 않고 평행한 직선들과도 모두 만나며, 세 직선이 한 점에서 만나지 않는다. 이 직선들이 좌표평면을 나누는 영역의 개수를 구하시오.',
+    a: reg + '개', h: '직선을 한 개씩 추가할 때, 만나는 직선 수 + 1 만큼 영역이 늘어난다', p: { a, b, reg } };
+});
+
+def('L-H8', 'L', 2, () => {
+  const a = pick([3, 4, 5, 6, 8]), b = ri(3, 12);
+  const [r, s] = pick([[1, 2], [1, 3], [2, 3]]);
+  const c1 = F(r * b, s * a), c2 = F(s * b, r * a);
+  return { q: '일차함수 ' + lineEq(F(-b, a), b) + '의 그래프가 ' + V('x') + '축, ' + V('y') + '축과 만나는 점을 각각 A, B라 하자. 원점 O를 지나는 직선 ' + V('y') + ' = ' + V('c') + V('x') + '가 삼각형 OAB의 넓이를 ' + r + ' : ' + s + '로 나눌 때, ' + V('c') + '의 값을 모두 구하시오.',
+    a: V('c') + ' = ' + fmt(c1) + ' 또는 ' + fmt(c2), h: '직선과 AB의 교점을 P(' + V('x') + ', ' + V('y') + ')라 하면 △OAP : △OBP = ' + a + V('y') + ' : ' + b + V('x'), p: { a, b, r, s, c1, c2 },
+    svg: fig({ pts: { O: [0, 0], A: [a, 0], B: [0, b] }, polys: [['O', 'A', 'B']] }) };
+});
+
+def('L-H9', 'L', 2, () => {
+  for (let t = 0; t < 500; t++) {
+    const [u, v, w] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [6, 8, 10], [8, 6, 10]]);
+    const tt = ri(1, 2);
+    const a1 = ri(1, 4), a2 = ri(a1 + 1, a1 + 5);       // A above y=x
+    const Ap = [a2, a1];
+    const B = [Ap[0] + u * tt * pick([1, -1]), Ap[1] + v * tt * pick([1, -1])];
+    if (!(B[1] > B[0]) || B[0] < 0 || B[1] < 0 || B[0] === B[1]) continue;
+    return { q: '점 A' + pt(a1, a2) + ', B' + pt(B[0], B[1]) + '와 직선 ' + V('y') + ' = ' + V('x') + ' 위의 점 P에 대하여 AP + PB의 최솟값을 구하시오.',
+      a: String(w * tt), h: 'A를 직선 ' + V('y') + ' = ' + V('x') + '에 대칭이동하면 ' + pt(a2, a1) + ' → 이 점과 B 사이의 거리', p: { A: [a1, a2], B, ans: w * tt } };
+  }
+});
+def('L-H10', 'L', 2, interceptGen(true));
+
+/* ================= 닮음 · 하 ================= */
+def('S-E1', 'S', 0, () => {
+  const a = ri(2, 6), b = ri(1, 5), c = (a + b) * ri(1, 3), de = F(a * c, a + b);
+  const D = lerp(TRI.A, TRI.B, a / (a + b)), E = lerp(TRI.A, TRI.C, a / (a + b));
+  return { q: M('삼각형 §ABC§에서 점 §D§, §E§는 각각 변 §AB§, §AC§ 위의 점이고 §DE§ ∥ §BC§이다. §AD§ = ' + a + ', §DB§ = ' + b + ', §BC§ = ' + c + '일 때, §DE§의 길이를 구하시오.'),
+    a: fmt(de), h: '§AD§ : §AB§ = §DE§ : §BC§', p: { a, b, c, de },
+    svg: fig({ pts: { A: TRI.A, B: TRI.B, C: TRI.C, D, E }, polys: [['A', 'B', 'C']], segs: [['D', 'E', 'b']], edges: [['A', 'D', a, -1], ['D', 'B', b, -1], ['B', 'C', c, -1]], off: { D: [-12, 0], E: [12, 0] } }) };
+});
+
+
+def('S-E2', 'S', 0, () => {
+  const n = 3 * ri(2, 15);
+  const Gp = [(TRI.A[0] + TRI.B[0] + TRI.C[0]) / 3, TRI.A[1] / 3];
+  const P = lerp(TRI.A, TRI.B, 2 / 3), Q = lerp(TRI.A, TRI.C, 2 / 3);
+  return { q: M('삼각형 §ABC§의 무게중심 §G§를 지나고 §BC§에 평행한 직선이 §AB§, §AC§와 만나는 점을 각각 §P§, §Q§라 하자. §BC§ = ' + n + '일 때, §PQ§의 길이를 구하시오.'),
+    a: String(2 * n / 3), h: '§AG§ : §GM§ = 2 : 1 (§M§은 §BC§의 중점) → 닮음비 2 : 3', p: { n },
+    svg: fig({ pts: { A: TRI.A, B: TRI.B, C: TRI.C, G: Gp, P, Q }, polys: [['A', 'B', 'C']], segs: [['P', 'Q', 'b']], edges: [['B', 'C', n, -1]], inner: ['G'], off: { P: [-12, 0], Q: [12, 0] } }) };
+});
+
+def('S-E3', 'S', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const m = ri(1, 5), n = ri(1, 5); if (m === n || gcd(m, n) > 1) continue;
+    const k = ri(1, 3), L = (m + n) * ri(1, 4);
+    const ao = F(L * m, m + n);
+    const lam = (L / (m + n)) * 0.8;
+    const A = [-(L * m / (m + n)) * 0.8, -(L * m / (m + n)) * 0.6], B = [(L * n / (m + n)) * 0.8, (L * n / (m + n)) * 0.6];
+    const C = [-0.5 * m * lam, 0.85 * m * lam], D = [0.5 * n * lam, -0.85 * n * lam];
+    return { q: M('두 선분 §AB§, §CD§가 점 §O§에서 만나고 §AC§ ∥ §DB§이다. §AC§ = ' + (m * k) + ', §DB§ = ' + (n * k) + ', §AB§ = ' + L + '일 때, §AO§의 길이를 구하시오.'),
+      a: fmt(ao), h: '△§OAC§ ∽ △§OBD§ → §AO§ : §OB§ = ' + (m * k) + ' : ' + (n * k), p: { m, n, k, L, ao },
+      svg: fig({ pts: { A, B, C, D, O: [0, 0] }, segs: [['A', 'B'], ['C', 'D'], ['A', 'C'], ['B', 'D']], inner: ['O'], off: { O: [10, -8] } }) };
+  }
+});
+
+def('S-E4', 'S', 0, () => {
+  const a = ri(3, 9), b = a + ri(2, 8);
+  const T = trapPts(a, b);
+  const O = inter(T.A, T.C, T.B, T.D);
+  const ef = F(2 * a * b, a + b);
+  const t = (T.A[1] - O[1]) / T.A[1];
+  const E = lerp(T.A, T.B, t), Fp = lerp(T.D, T.C, t);
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ = ' + a + ', §BC§ = ' + b + '이다. 두 대각선의 교점 §O§를 지나고 §BC§에 평행한 직선이 §AB§, §DC§와 만나는 점을 각각 §E§, §F§라 할 때, §EF§의 길이를 구하시오.'),
+    a: fmt(ef), h: '§EF§ = 2·§AD§·§BC§ ÷ (§AD§ + §BC§)', p: { a, b, ef },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, O, E, F: Fp }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D'], ['E', 'Fp', 'b']].map((s) => [s[0], s[1] === 'Fp' ? 'F' : s[1], s[2]]), edges: [['A', 'D', a, 1], ['B', 'C', b, -1]], inner: ['O'], off: { E: [-12, 0], F: [12, 0], O: [0, -12] } }) };
+});
+
+def('S-E5', 'S', 0, () => {
+  const [m, n] = pick([[1, 2], [2, 3], [3, 4], [2, 5], [3, 5], [1, 3]]);
+  const s = ri(2, 9), v = ri(2, 9);
+  const S0 = m * m * s, V0 = m * m * m * v;
+  return { q: '닮음비가 ' + m + ' : ' + n + '인 두 입체도형이 있다. 작은 도형의 겉넓이가 ' + S0 + ' cm², 부피가 ' + V0 + ' cm³일 때, 큰 도형의 겉넓이와 부피를 구하시오.',
+    a: '겉넓이 ' + (n * n * s) + ' cm², 부피 ' + (n * n * n * v) + ' cm³', h: '겉넓이의 비 ' + (m * m) + ' : ' + (n * n) + ', 부피의 비 ' + (m ** 3) + ' : ' + (n ** 3), p: { m, n, s, v } };
+});
+
+def('S-E6', 'S', 0, () => {
+  const N = pick([10000, 20000, 25000, 50000]), A = pick([4, 9, 16, 25, 36, 6, 8, 12]);
+  const km2 = (A * N * N) / 1e10;
+  return { q: '축척이 1 : ' + N + '인 지도에서 넓이가 ' + A + ' cm²인 호수의 실제 넓이는 몇 km²인가?',
+    a: decStr(km2) + ' km²', h: '지도의 1 cm = 실제 ' + (N / 100) + ' m → 넓이는 (' + (N / 100) + ')²배', p: { N, A, km2 } };
+});
+
+def('S-E7', 'S', 0, () => {
+  const [a, b] = pick([[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [2, 5]]), u = ri(1, 3);
+  const m = u * a * a, n = u * b * b, ah = u * a * b;
+  const area = F((m + n) * ah, 2);
+  const A = [0, ah], B = [-m, 0], C = [n, 0], H = [0, 0];
+  return { q: M('∠§A§ = 90°인 직각삼각형 §ABC§에서 꼭짓점 §A§에서 빗변 §BC§에 내린 수선의 발을 §H§라 하자. §BH§ = ' + m + ', §CH§ = ' + n + '일 때, △§ABC§의 넓이를 구하시오.'),
+    a: fmt(area), h: '§AH§² = §BH§ × §CH§ → §AH§ = ' + ah, p: { m, n, ah, area },
+    svg: fig({ pts: { A, B, C, H }, polys: [['A', 'B', 'C']], segs: [['A', 'H', 'd']], rights: [['A', 'B', 'C'], ['H', 'A', 'C']], edges: [['B', 'H', m, -1], ['H', 'C', n, -1]], off: { H: [0, 14] } }) };
+});
+
+def('S-E8', 'S', 0, () => {
+  const s = ri(2, 20);
+  const A = [0, 0], B = [8, 0], C = [10, 4], D = [2, 4], Mv = mid(C, D), P = inter(A, Mv, B, D);
+  return { q: M('평행사변형 §ABCD§에서 변 §CD§의 중점을 §M§, 대각선 §BD§와 §AM§의 교점을 §P§라 하자. △§PDM§의 넓이가 ' + s + '일 때, 평행사변형 §ABCD§의 넓이를 구하시오.'),
+    a: String(12 * s), h: '△§PDM§ ∽ △§PBA§ (닮음비 1 : 2) → △§ABP§ = ' + (4 * s) + ' = ' + '평행사변형의 ⅓', p: { s },
+    svg: fig({ pts: { A, B, C, D, M: Mv, P }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'M'], ['B', 'D']], fills: [{ p: ['P', 'D', 'M'], c: '#fde68a' }], inner: ['P'], off: { P: [0, 14] } }) };
+});
+
+def('S-E9', 'S', 0, () => {
+  const [a, b, c] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17], [6, 8, 10], [7, 24, 25]]);
+  const k = ri(2, 5), P2 = (a + b + c) * k;
+  return { q: '세 변의 길이가 ' + a + ', ' + b + ', ' + c + '인 삼각형과 닮은 삼각형의 둘레의 길이가 ' + P2 + '일 때, 이 닮은 삼각형의 가장 긴 변의 길이를 구하시오.',
+    a: String(c * k), h: '둘레의 비 = 닮음비 = 1 : ' + k, p: { a, b, c, k } };
+});
+
+def('S-E10', 'S', 0, () => {
+  const [a, b, c] = triple(); const k = pick([1, 1, 2]);
+  const A = a * k, B = b * k, C = c * k; const r = (A + B - C) / 2;
+  return { q: M('∠§C§ = 90°, §BC§ = ' + A + ', §CA§ = ' + B + ', §AB§ = ' + C + '인 직각삼각형 §ABC§의 내접원의 반지름의 길이를 구하시오.'),
+    a: String(r), h: '넓이 = ½·(둘레)·§r§ → §r§ = 2·넓이 ÷ 둘레', p: { A, B, C, r },
+    svg: fig({ pts: { C: [0, 0], B: [A, 0], A: [0, B], I: [r, r] }, polys: [['A', 'B', 'C']], circles: [{ c: 'I', r, color: '#2563eb' }], rights: [['C', 'B', 'A']], hide: ['I'], edges: [['C', 'B', A, -1], ['C', 'A', B, 1], ['A', 'B', C, -1]] }) };
+});
+
+def('S-E11', 'S', 0, () => {
+  const [x0, y0, z0] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17]]), kk = ri(1, 3), x = x0 * kk, y = y0 * kk, z = z0 * kk;
+  return { q: M('§AB§ = §AC§ = ' + z + ', §BC§ = ' + (2 * x) + '인 이등변삼각형 §ABC§에서 꼭지각 §A§의 이등분선이 §BC§와 만나는 점을 §D§라 할 때, §AD§의 길이를 구하시오.'),
+    a: String(y), h: '§D§는 §BC§의 중점, §AD§ ⊥ §BC§ → §AD§² = ' + z + '² − ' + x + '²', p: { x, y, z },
+    svg: fig({ pts: { A: [0, y], B: [-x, 0], C: [x, 0], D: [0, 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'D', 'd']], rights: [['D', 'A', 'C']], edges: [['A', 'B', z, 1], ['A', 'C', z, -1], ['B', 'C', 2 * x, -1]], off: { D: [10, 14] } }) };
+});
+
+def('S-E12', 'S', 0, () => {
+  const S = 2 * ri(8, 40);
+  return { q: M('넓이가 ' + S + '인 사각형 §ABCD§의 각 변의 중점을 차례로 이어서 만든 사각형의 넓이를 구하시오.'),
+    a: String(S / 2), h: '중점을 이은 사각형은 평행사변형이고 넓이는 원래의 ½', p: { S } };
+});
+
+def('S-E13', 'S', 0, () => {
+  const [m, n] = pick([[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]);
+  const s = ri(2, 6) * m * m;
+  const tr = (s * ((m + n) * (m + n) - m * m)) / (m * m);
+  const D = lerp(TRI.A, TRI.B, m / (m + n)), E = lerp(TRI.A, TRI.C, m / (m + n));
+  return { q: M('삼각형 §ABC§에서 점 §D§, §E§는 각각 변 §AB§, §AC§ 위의 점이고 §DE§ ∥ §BC§이다. §AD§ : §DB§ = ' + m + ' : ' + n + '이고 △§ADE§의 넓이가 ' + s + '일 때, 사다리꼴 §DBCE§의 넓이를 구하시오.'),
+    a: String(tr), h: '△§ADE§ : △§ABC§ = ' + (m * m) + ' : ' + ((m + n) * (m + n)), p: { m, n, s, tr },
+    svg: fig({ pts: { A: TRI.A, B: TRI.B, C: TRI.C, D, E }, polys: [['A', 'B', 'C']], segs: [['D', 'E', 'b']], fills: [{ p: ['A', 'D', 'E'], c: '#fde68a' }], off: { D: [-12, 0], E: [12, 0] } }) };
+});
+
+def('S-E14', 'S', 0, () => {
+  const a = ri(3, 12), b = ri(3, 12); const sd = F(a * b, a + b);
+  const sv = sd.val();
+  return { q: M('∠§B§ = 90°, §AB§ = ' + a + ', §BC§ = ' + b + '인 직각삼각형 §ABC§에 꼭짓점 §B§를 한 꼭짓점으로 하는 정사각형을 그림과 같이 내접시킬 때, 정사각형의 한 변의 길이를 구하시오.'),
+    a: fmt(sd), h: '한 변을 ' + V('s') + '라 하면 ' + V('s') + '/' + a + ' + ' + V('s') + '/' + b + ' = 1', p: { a, b, sd },
+    svg: fig({ pts: { B: [0, 0], C: [b, 0], A: [0, a], S: [sv, sv], T: [sv, 0], U: [0, sv] }, polys: [['A', 'B', 'C']], fills: [{ p: ['B', 'T', 'S', 'U'] }], polys2: [], hide: ['S', 'T', 'U'], rights: [['B', 'C', 'A']], edges: [['B', 'C', b, -1], ['B', 'A', a, 1]] }) };
+});
+
+/* ================= 닮음 · 중 ================= */
+def('S-M1', 'S', 1, () => {
+  const [a, b, c] = triple(); const k = pick([1, 1, 2, 3]);
+  const A = a * k, B = b * k, C = c * k;
+  const r = F(A + B - C, 2), len = F(A).mul(F(B).sub(r)).div(B);
+  const Ir = r.val(); const yL = Ir;
+  const Pp = [0, yL], Qp = [A * (1 - yL / B), yL];
+  return { q: M('∠§C§ = 90°, §BC§ = ' + A + ', §CA§ = ' + B + ', §AB§ = ' + C + '인 직각삼각형 §ABC§의 내심을 §I§라 하자. §I§를 지나고 §BC§에 평행한 직선이 §CA§, §AB§와 만나는 점을 각각 §P§, §Q§라 할 때, §PQ§의 길이를 구하시오.'),
+    a: fmt(len), h: '내접원의 반지름 §r§ = ' + fmt(r) + ', △§APQ§ ∽ △§ACB§ (닮음비 (' + B + ' − §r§) : ' + B + ')', p: { A, B, C, r, len },
+    svg: fig({ pts: { C: [0, 0], B: [A, 0], A: [0, B], I: [Ir, Ir], P: Pp, Q: Qp }, polys: [['A', 'B', 'C']], circles: [{ c: 'I', r: Ir, color: '#2563eb' }], segs: [['P', 'Q', 'd']], rights: [['C', 'B', 'A']], inner: ['I'], off: { P: [-12, 0], Q: [12, -4], I: [0, 15] } }) };
+});
+
+def('S-M2', 'S', 1, () => {
+  const a = ri(3, 8), b = a * ri(2, 4);
+  const T = trapPts(a, b), O = inter(T.A, T.C, T.B, T.D);
+  const ce = F(b * b, a + b);
+  const E = lerp(T.C, T.B, (b / (a + b)));
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ = ' + a + ', §BC§ = ' + b + '이다. 두 대각선의 교점 §O§를 지나고 §AB§에 평행한 직선이 §BC§와 만나는 점을 §E§라 할 때, §CE§의 길이를 구하시오.'),
+    a: fmt(ce), h: '§AO§ : §OC§ = ' + a + ' : ' + b + ' → §CE§ : §CB§ = §CO§ : §CA§ = ' + b + ' : ' + (a + b), p: { a, b, ce },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, O, E }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D'], ['O', 'E', 'b']], edges: [['A', 'D', a, 1], ['B', 'C', b, -1]], inner: ['O'], off: { O: [0, -12] } }) };
+});
+
+def('S-M3', 'S', 1, () => {
+  const [m, n] = pick([[2, 1], [1, 1], [3, 1], [1, 2], [3, 2], [4, 1]]);
+  const s = n * ri(2, 6);
+  const S = F(2 * s * (m + 2 * n), n);
+  const A = [0, 0], B = [9, 0], C = [12, 4], D = [3, 4];
+  const E = lerp(B, C, m / (m + n)), Fp = inter(A, C, D, E);
+  return { q: M('평행사변형 §ABCD§의 변 §BC§ 위의 점 §E§가 §BE§ : §EC§ = ' + m + ' : ' + n + '이고, 대각선 §AC§와 선분 §DE§의 교점을 §F§라 하자. △§FCD§의 넓이가 ' + s + '일 때, 평행사변형 §ABCD§의 넓이를 구하시오.'),
+    a: fmt(S), h: '△§FEC§ ∽ △§FDA§ → §CF§ : §FA§ = ' + n + ' : ' + (m + n), p: { m, n, s, S },
+    svg: fig({ pts: { A, B, C, D, E, F: Fp }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['D', 'E']], fills: [{ p: ['F', 'C', 'D'], c: '#fde68a' }], inner: ['F'], off: { F: [0, 14] } }) };
+});
+
+def('S-M4', 'S', 1, () => {
+  let m, n; do { m = ri(1, 6); n = ri(1, 6); } while (gcd(m, n) > 1 || m === n);
+  const A = [1.5, 7], B = [0, 0], C = [9, 0]; const D = lerp(B, C, m / (m + n)); const Mv = mid(A, D); const E = inter(B, Mv, A, C);
+  return { q: M('삼각형 §ABC§의 변 §BC§를 ' + m + ' : ' + n + '으로 내분하는 점을 §D§, 선분 §AD§의 중점을 §M§이라 하고, 직선 §BM§이 변 §AC§와 만나는 점을 §E§라 할 때, §AE§ : §EC§를 가장 간단한 자연수의 비로 나타내시오.'),
+    a: m + ' : ' + (m + n), h: '§D§를 지나 §BE§에 평행한 직선을 그어 닮음을 이용한다', p: { m, n },
+    svg: fig({ pts: { A, B, C, D, M: Mv, E }, polys: [['A', 'B', 'C']], segs: [['A', 'D'], ['B', 'E']], edges: [['B', 'D', m, -1], ['D', 'C', n, -1]], inner: ['M'], off: { M: [-12, 6] } }) };
+});
+
+def('S-M5', 'S', 1, () => {
+  const [a, b, c] = triple(); const k = pick([1, 1, 2]);
+  const w = a * k, h = b * k, d = c * k;
+  const ans = F(h * d, w);
+  const e = (w * d) / (2 * 1) / (w * 1) ; // placeholder
+  const A = [0, 0], B = [w, 0], C = [w, h], D = [0, h];
+  const Ex = d * d / (2 * w), Fx = w - Ex;
+  return { q: M('가로의 길이가 ' + w + ', 세로의 길이가 ' + h + '인 직사각형 모양의 종이 §ABCD§를 꼭짓점 §A§와 §C§가 겹치도록 접었다. 이때 접는 선의 길이를 구하시오.'),
+    a: fmt(ans), h: '대각선 §AC§ = ' + d + ', 접는 선과 §AB§의 교점 §E§에서 △§AOE§ ∽ △§ABC§', p: { w, h, d, ans },
+    svg: fig({ pts: { A, B, C, D, E: [Ex, 0], F: [Fx, h] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C', 'g'], ['E', 'F', 'b']], edges: [['A', 'B', w, -1], ['B', 'C', h, -1]] }) };
+});
+
+def('S-M6', 'S', 1, () => {
+  const s = pick([6, 9, 12, 15, 18]), t = ri(1, Math.floor(s / 2));
+  const df2 = t * t + (s - t) * (s - t) - t * (s - t);
+  const co = F(df2, 4);
+  const sq3 = Math.sqrt(3);
+  const A = [0, 0], B = [s, 0], C = [s / 2, s * sq3 / 2];
+  return { q: M('한 변의 길이가 ' + s + '인 정삼각형 §ABC§의 세 변 §AB§, §BC§, §CA§ 위에 §AD§ = §BE§ = §CF§ = ' + t + '가 되도록 점 §D§, §E§, §F§를 잡을 때, △§DEF§의 넓이를 구하시오.'),
+    a: fmt(co) + '√3', h: '△§ADF§에서 §DF§² = ' + t + '² + ' + (s - t) + '² − ' + t + '×' + (s - t) + ' = ' + df2 + ' (정삼각형 §DEF§)', p: { s, t, df2, co },
+    svg: fig({ pts: { A, B, C, D: lerp(A, B, t / s), E: lerp(B, C, t / s), F: lerp(C, A, t / s) }, polys: [['A', 'B', 'C']], fills: [{ p: ['D', 'E', 'F'] }], segs: [['D', 'E', 'b'], ['E', 'F', 'b'], ['F', 'D', 'b']], off: { D: [0, 14], E: [12, -4], F: [-12, -4] } }) };
+});
+
+def('S-M7', 'S', 1, () => {
+  const [p, q] = pick([[1, 2], [1, 3], [2, 3], [1, 4]]);
+  const S = (p + q) * (p + q) * ri(2, 6);
+  const ans = F(S * ((p + q) * (p + q) - 3 * p * q), (p + q) * (p + q));
+  const A = [1.5, 7], B = [0, 0], C = [10, 0];
+  const Dp = lerp(A, B, p / (p + q)), E = lerp(B, C, p / (p + q)), Fp = lerp(C, A, p / (p + q));
+  return { q: M('삼각형 §ABC§의 세 변 §AB§, §BC§, §CA§를 각각 ' + p + ' : ' + q + '으로 내분하는 점을 §D§, §E§, §F§라 하자. (§AD§ : §DB§ = §BE§ : §EC§ = §CF§ : §FA§ = ' + p + ' : ' + q + ') △§ABC§의 넓이가 ' + S + '일 때, △§DEF§의 넓이를 구하시오.'),
+    a: fmt(ans), h: '모서리의 세 삼각형은 각각 △§ABC§의 ' + p * q + '/' + (p + q) * (p + q) + '', p: { p, q, S, ans },
+    svg: fig({ pts: { A, B, C, D: Dp, E, F: Fp }, polys: [['A', 'B', 'C']], fills: [{ p: ['D', 'E', 'F'] }], segs: [['D', 'E', 'b'], ['E', 'F', 'b'], ['F', 'D', 'b']], off: { D: [-12, 0], E: [0, 14], F: [12, 0] } }) };
+});
+
+def('S-M8', 'S', 1, () => {
+  const n = pick([3, 4, 5]), k = ri(1, n - 2);
+  const S = n * n * ri(2, 6);
+  const ans = (S * (2 * k + 1)) / (n * n);
+  const A = [3, 9], B = [0, 0], C = [12, 0];
+  const pts = { A, B, C }; const segs = []; const off = {};
+  for (let i = 1; i < n; i++) { pts['D' + i] = lerp(A, B, i / n); pts['E' + i] = lerp(A, C, i / n); segs.push(['D' + i, 'E' + i]); off['D' + i] = [-14, 0]; off['E' + i] = [14, 0]; }
+  const sb = (nm, i) => '<var>' + nm + '</var><sub>' + i + '</sub>';
+  return { q: M('삼각형 §ABC§의 넓이는 ' + S + '이다. 변 §AB§, §AC§를 각각 ' + n + '등분하는 점을 §A§에서 가까운 것부터 차례로 ') + sb('D', 1) + ', ' + sb('D', 2) + ', …, ' + sb('E', 1) + ', ' + sb('E', 2) + ', …라 하고, ' + sb('D', 'i') + sb('E', 'i') + '를 이었다. 선분 ' + sb('D', k) + sb('E', k) + '와 선분 ' + sb('D', k + 1) + sb('E', k + 1) + ' 사이에 있는 사다리꼴의 넓이를 구하시오.',
+    a: fmt(ans), h: '△' + sb('AD', k) + sb('E', k) + ' : △' + sb('AD', k + 1) + sb('E', k + 1) + ' = ' + (k * k) + ' : ' + ((k + 1) * (k + 1)), p: { n, k, S, ans },
+    svg: fig({ pts, polys: [['A', 'B', 'C']], segs, off }) };
+});
+
+def('S-M9', 'S', 1, () => {
+  const [p, q] = pick([[1, 2], [1, 3], [2, 3]]); const u = ri(2, 8);
+  const Vw = p * p * p * u, more = u * (q * q * q - p * p * p);
+  return { q: '원뿔 모양의 그릇(꼭짓점이 아래)에 그릇 높이의 ' + fmt(F(p, q)) + ' 지점까지 물을 넣었더니 물의 부피가 ' + Vw + 'π였다. 이 그릇에 물을 가득 채우려면 몇 π만큼 더 부어야 하는가?',
+    a: more + 'π', h: '닮음비 ' + p + ' : ' + q + ' → 부피비 ' + (p ** 3) + ' : ' + (q ** 3), p: { p, q, u, more },
+    svg: coneFig(p / q, '높이의 ' + p + '/' + q) };
+});
+
+def('S-M10', 'S', 1, () => {
+  const a = ri(2, 6), b = ri(a + 1, 9);
+  const T = trapPts(a, b), O = inter(T.A, T.C, T.B, T.D);
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§이고 두 대각선의 교점을 §O§라 하자. △§AOD§의 넓이가 ' + (a * a) + ', △§BOC§의 넓이가 ' + (b * b) + '일 때, 사다리꼴 §ABCD§의 넓이를 구하시오.'),
+    a: String((a + b) * (a + b)), h: '닮음비 ' + a + ' : ' + b + ', △§AOB§ = △§DOC§ = ' + (a * b), p: { a, b },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, O }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], notes: [[lerp(lerp(T.A, T.D, 0.5), O, 0.45), a * a, 0, 0, '#111'], [lerp(lerp(T.B, T.C, 0.5), O, 0.45), b * b, 0, 0, '#111']], inner: ['O'], off: { O: [14, -2] } }) };
+});
+
+def('S-M11', 'S', 1, () => {
+  const s = ri(2, 20);
+  const A = [2, 7], B = [0, 0], C = [9, 0]; const Mv = mid(A, B), N = mid(A, C);
+  const Gp = [(A[0] + B[0] + C[0]) / 3, A[1] / 3];
+  return { q: M('삼각형 §ABC§의 변 §AB§, §AC§의 중점을 각각 §M§, §N§이라 하고 §BN§과 §CM§의 교점을 §G§라 하자. △§GMN§의 넓이가 ' + s + '일 때, △§ABC§의 넓이를 구하시오.'),
+    a: String(12 * s), h: '§G§는 무게중심, △§GMN§ ∽ △§GCB§ (1 : 2) → △§GBC§ = ' + (4 * s) + ' = △§ABC§의 ⅓', p: { s },
+    svg: fig({ pts: { A, B, C, M: Mv, N, G: Gp }, polys: [['A', 'B', 'C']], segs: [['B', 'N'], ['C', 'M'], ['M', 'N']], fills: [{ p: ['G', 'M', 'N'], c: '#fde68a' }], inner: ['G'], off: { M: [-12, 0], N: [12, 0], G: [0, 14] } }) };
+});
+
+def('S-M12', 'S', 1, () => {
+  const S = 2 * ri(20, 40), x = ri(5, Math.floor(S / 2) - 5), y = ri(5, Math.floor(S / 2) - 5);
+  const A = [0, 0], B = [9, 0], C = [12, 5], D = [3, 5], P = [6.2, 2.1];
+  return { q: M('넓이가 ' + S + '인 평행사변형 §ABCD§의 내부에 한 점 §P§가 있다. △§PAB§의 넓이가 ' + x + ', △§PBC§의 넓이가 ' + y + '일 때, △§PCD§와 △§PDA§의 넓이를 각각 구하시오.'),
+    a: '△§PCD§ = ' + (S / 2 - x) + ', △§PDA§ = ' + (S / 2 - y), h: '△§PAB§ + △§PCD§ = △§PBC§ + △§PDA§ = 평행사변형의 ½', p: { S, x, y },
+    svg: fig({ pts: { A, B, C, D, P }, polys: [['A', 'B', 'C', 'D']], segs: [['P', 'A'], ['P', 'B'], ['P', 'C'], ['P', 'D']], inner: ['P'], off: { P: [4, 14] } }) };
+});
+
+def('S-M13', 'S', 1, () => {
+  const a = ri(3, 8), b = a * ri(2, 3);
+  const [m, n] = pick([[1, 2], [1, 3], [2, 1], [2, 3], [3, 1]]);
+  const ef = F(n * a + m * b, m + n);
+  const T = trapPts(a, b);
+  const E = lerp(T.A, T.B, m / (m + n)), Fp = lerp(T.D, T.C, m / (m + n));
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ = ' + a + ', §BC§ = ' + b + '이다. 변 §AB§ 위의 점 §E§가 §AE§ : §EB§ = ' + m + ' : ' + n + '이고, §E§를 지나 §BC§에 평행한 직선이 §DC§와 만나는 점을 §F§라 할 때, §EF§의 길이를 구하시오.'),
+    a: fmt(ef), h: '§A§를 지나 §DC§에 평행한 직선을 그어 평행사변형과 삼각형으로 나눈다', p: { a, b, m, n, ef },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, E, F: Fp }, polys: [['A', 'B', 'C', 'D']], segs: [['E', 'F', 'b']], edges: [['A', 'D', a, 1], ['B', 'C', b, -1]], off: { E: [-12, 0], F: [12, 0] } }) };
+});
+
+def('S-M14', 'S', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const c1 = ri(4, 9), c2 = ri(3, 8), a = ri(5, 12); if (!(a < c1 + c2 && c1 < a + c2 && c2 < a + c1)) continue;
+    if ((a * c1) % (c1 + c2)) continue;
+    const bd = F(a * c1, c1 + c2);
+    const B = [0, 0], C = [a, 0]; const bx = (c1 * c1 + a * a - c2 * c2) / (2 * a), by = Math.sqrt(c1 * c1 - bx * bx); const A = [bx, by];
+    return { q: M('삼각형 §ABC§에서 §AB§ = ' + c1 + ', §AC§ = ' + c2 + ', §BC§ = ' + a + '이다. ∠§A§의 이등분선이 §BC§와 만나는 점을 §D§라 할 때, §BD§의 길이를 구하시오.'),
+      a: fmt(bd), h: '각의 이등분선의 정리: §BD§ : §DC§ = §AB§ : §AC§', p: { c1, c2, a, bd }, star: true,
+      svg: fig({ pts: { A, B, C, D: [bd.val(), 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'D']], edges: [['A', 'B', c1, -1], ['A', 'C', c2, 1], ['B', 'C', a, -1]] }) };
+  }
+}, { star: true });
+
+def('S-M15', 'S', 1, () => {
+  const a = ri(2, 5), b = a * ri(2, 4), h = 2 * ri(2, 5);
+  const ans = F(h * b * b, 2 * (a + b));
+  const T = trapPts(a, b), O = inter(T.A, T.C, T.B, T.D);
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ = ' + a + ', §BC§ = ' + b + '이고 높이가 ' + h + '이다. 두 대각선의 교점을 §O§라 할 때, △§BOC§의 넓이를 구하시오.'),
+    a: fmt(ans), h: '사다리꼴 넓이 = ' + fmt(F((a + b) * h, 2)) + ', 네 삼각형의 넓이비 ' + (a * a) + ' : ' + (a * b) + ' : ' + (b * b) + ' : ' + (a * b), p: { a, b, h, ans },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, O }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], fills: [{ p: ['B', 'C', 'O'], c: '#fde68a' }], edges: [['A', 'D', a, 1], ['B', 'C', b, -1]], inner: ['O'], off: { O: [0, -12] } }) };
+});
+
+def('S-M16', 'S', 1, () => {
+  const bc = 2 * ri(3, 10), S = 4 * ri(6, 20);
+  const A = [3, 7], B = [0, 0], C = [8, 0]; const O = [4, 2.2];
+  return { q: M('삼각형 §ABC§의 외심을 §O§라 하고, §O§에서 §AB§, §AC§에 내린 수선의 발을 각각 §M§, §N§이라 하자. §BC§ = ' + bc + ', △§ABC§의 넓이가 ' + S + '일 때, §MN§의 길이와 △§AMN§의 넓이를 구하시오.'),
+    a: '§MN§ = ' + (bc / 2) + ', △§AMN§ = ' + (S / 4), h: '외심에서 변에 내린 수선의 발은 그 변의 중점 → 중점연결정리', p: { bc, S } };
+}, {});
+
+/* ================= 닮음 · 상 ================= */
+def('S-H1', 'S', 2, () => {
+  const T = [[3, 4, 5], [6, 8, 10], [5, 12, 13]];
+  for (let t = 0; t < 200; t++) {
+    const [e, h, d] = pick(T);
+    const x = (d * d) / (2 * e); const w = Math.ceil(x) + ri(0, 2);
+    const ans = F(d * d * d, 2 * e * h);
+    const A = [0, 0], B = [w, 0], C = [w, h], D = [0, h], E = [e, h], P = [d * d / (2 * e), 0], Q = [0, d * d / (2 * h)];
+    return { q: M('가로의 길이가 ' + w + ', 세로의 길이가 ' + h + '인 직사각형 §ABCD§의 꼭짓점 §A§가 변 §CD§ 위의 점 §E§에 오도록 접었다. §DE§ = ' + e + '이고 접는 선이 변 §AB§, §AD§와 만나는 점을 각각 §P§, §Q§라 할 때, §PQ§의 길이를 구하시오.'),
+      a: fmt(ans), h: '§AE§ = ' + d + ', 중점 §M§에서 △§AMQ§ ∽ △§ADE§, △§AMP§ ∽ △§AEB§… → §AP§ = ' + fmt(F(d * d, 2 * e)) + ', §AQ§ = ' + fmt(F(d * d, 2 * h)), p: { w, h, e, d, ans },
+      svg: fig({ pts: { A, B, C, D, E, P, Q }, polys: [['A', 'B', 'C', 'D']], segs: [['P', 'Q', 'b'], ['Q', 'E', 'd'], ['P', 'E', 'd'], ['A', 'E', 'g']], edges: [['D', 'E', e, 1]], off: { P: [0, 14], Q: [-12, 0], E: [0, -12] } }) };
+  }
+});
+
+def('S-H2', 'S', 2, () => {
+  const [p, q, r] = pick([[3, 4, 5], [4, 3, 5]]); const k = 5 * ri(1, 3);
+  const CA = p * k, CB = q * k, AB = r * k;
+  const AH = (CA * CA) / AB, BH = (CB * CB) / AB, CH = (CA * CB) / AB;
+  const area = F(CH * CH * CH * CH, 2 * CA * CB);
+  const C = [0, CH], A = [-AH, 0], B = [BH, 0], H = [0, 0];
+  const Pp = foot(H, C, A), Qp = foot(H, C, B);
+  return { q: M('∠§C§ = 90°인 직각삼각형 §ABC§에서 꼭짓점 §C§에서 빗변 §AB§에 내린 수선의 발을 §H§라 하고 §AH§ = ' + AH + ', §BH§ = ' + BH + '이다. §H§에서 §CA§, §CB§에 내린 수선의 발을 각각 §P§, §Q§라 할 때, △§CPQ§의 넓이를 구하시오.'),
+    a: fmt(area), h: '§CH§ = ' + CH + ', §CP§·§CA§ = §CQ§·§CB§ = §CH§² → △§CPQ§ ∽ △§CBA§', p: { AH, BH, CH, area },
+    svg: fig({ pts: { C, A, B, H, P: Pp, Q: Qp }, polys: [['A', 'B', 'C']], segs: [['C', 'H', 'd'], ['H', 'P'], ['H', 'Q'], ['P', 'Q', 'b']], rights: [['C', 'A', 'B']], edges: [['A', 'H', AH, -1], ['H', 'B', BH, -1]], off: { H: [0, 14], P: [-12, 0], Q: [12, 0] } }) };
+});
+
+def('S-H3', 'S', 2, () => {
+  const AD = 6 * ri(2, 15);
+  const A = [2, 8], B = [0, 0], C = [12, 0]; const D = mid(B, C); const E = mid(A, B), Fp = mid(A, C); const Gp = [(A[0] + B[0] + C[0]) / 3, A[1] / 3]; const Mv = mid(A, D);
+  return { q: M('삼각형 §ABC§에서 §BC§의 중점을 §D§, §AB§, §AC§의 중점을 각각 §E§, §F§라 하고, 무게중심을 §G§, 선분 §EF§와 §AD§의 교점을 §M§이라 하자. §AD§ = ' + AD + '일 때, §GM§의 길이를 구하시오.'),
+    a: String(AD / 6), h: '§AG§ = ⅔§AD§, §AM§ = ½§AD§ (중점연결정리)', p: { AD },
+    svg: fig({ pts: { A, B, C, D, E, F: Fp, G: Gp, M: Mv }, polys: [['A', 'B', 'C']], segs: [['A', 'D'], ['E', 'F']], edges: [['A', 'D', AD, 1]], inner: ['G', 'M'], off: { E: [-12, 0], F: [12, 0], M: [0, -12], G: [12, 10] } }) };
+});
+
+def('S-H4', 'S', 2, () => {
+  const L = 8 * ri(1, 3), n = pick([2, 3]);
+  let sum = 0; let s = L / 2; for (let i = 0; i < n; i++) { sum += s * s; s /= 2; }
+  return { q: M('∠§B§ = 90°, §AB§ = §BC§ = ' + L + '인 직각이등변삼각형 §ABC§가 있다. 꼭짓점 §B§를 한 꼭짓점으로 하는 정사각형을 그림과 같이 내접시키고, 그 위쪽에 남은 작은 직각이등변삼각형에 같은 방법으로 다음 정사각형을 내접시키는 일을 반복하여 정사각형을 ' + n + '개 만들 때, ' + n + '개의 정사각형의 넓이의 합을 구하시오.'),
+    a: String(sum), h: '정사각형의 한 변은 ' + (L / 2) + ', ' + (L / 4) + ', …로 절반씩 줄어든다', p: { L, n, sum },
+    svg: (() => { const pts = { B: [0, 0], A: [L, 0], C: [0, L] }; const fills = []; let s2 = L / 2, y0 = 0; for (let i = 0; i < n; i++) { pts['P' + i] = [0, y0]; pts['Q' + i] = [s2, y0]; pts['R' + i] = [s2, y0 + s2]; pts['S' + i] = [0, y0 + s2]; fills.push({ p: ['P' + i, 'Q' + i, 'R' + i, 'S' + i], c: i % 2 ? '#fde68a' : '#dbeafe' }); y0 += s2; s2 /= 2; } return fig({ pts, polys: [['A', 'B', 'C']], fills, hide: Object.keys(pts).filter((x) => /^[PQRS]\d/.test(x)), rights: [['B', 'A', 'C']] }); })() };
+});
+
+def('S-H5', 'S', 2, () => {
+  const S = 6 * ri(4, 20);
+  const A = [0, 0], B = [9, 0], C = [12, 5], D = [3, 5]; const E = mid(B, C), Fp = mid(C, D); const P = inter(A, E, B, D), Q = inter(A, Fp, B, D);
+  return { q: M('넓이가 ' + S + '인 평행사변형 §ABCD§에서 변 §BC§, §CD§의 중점을 각각 §E§, §F§라 하고, §AE§, §AF§가 대각선 §BD§와 만나는 점을 각각 §P§, §Q§라 할 때, △§APQ§의 넓이를 구하시오.'),
+    a: String(S / 6), h: '§BP§ : §PD§ = 1 : 2, §DQ§ : §QB§ = 1 : 2 → §BP§ = §PQ§ = §QD§', p: { S },
+    svg: fig({ pts: { A, B, C, D, E, F: Fp, P, Q }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'E'], ['A', 'F'], ['B', 'D']], fills: [{ p: ['A', 'P', 'Q'], c: '#fde68a' }], inner: ['P', 'Q'], off: { P: [4, 14], Q: [-4, -12], E: [12, 0], F: [0, -12] } }) };
+});
+
+def('S-H6', 'S', 2, () => {
+  const [p, q] = pick([[1, 2], [1, 3], [2, 3]]); const u = ri(1, 4);
+  const tm = p * p * p * u, tot = q * q * q * u;
+  return { q: '꼭짓점이 아래에 있는 원뿔 모양의 빈 그릇에 일정한 속도로 물을 넣었더니, 수면이 그릇 높이의 ' + fmt(F(p, q)) + ' 지점에 도달할 때까지 ' + tm + '분이 걸렸다. 이 그릇이 가득 찰 때까지는 처음부터 모두 몇 분이 걸리는가?',
+    a: tot + '분', h: '물의 부피의 비 = ' + (p ** 3) + ' : ' + (q ** 3), p: { p, q, u, tot }, svg: coneFig(p / q, '높이의 ' + p + '/' + q) };
+});
+
+def('S-H7', 'S', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const s = ri(4, 12), d = ri(1, s - 1);
+    const CE = F(d * (s - d), s), AE = F(s).sub(CE);
+    const sq3 = Math.sqrt(3);
+    const B = [0, 0], C = [s, 0], A = [s / 2, s * sq3 / 2], D = [d, 0], E = lerp(C, A, CE.val() / s);
+    return { q: M('한 변의 길이가 ' + s + '인 정삼각형 §ABC§의 변 §BC§ 위에 §BD§ = ' + d + '인 점 §D§를 잡고, 변 §AC§ 위에 ∠§ADE§ = 60°가 되도록 점 §E§를 잡을 때, §AE§의 길이를 구하시오.'),
+      a: fmt(AE), h: '△§ABD§ ∽ △§DCE§ → §AB§ : §DC§ = §BD§ : §CE§', p: { s, d, AE },
+      svg: fig({ pts: { A, B, C, D, E }, polys: [['A', 'B', 'C']], segs: [['A', 'D'], ['D', 'E', 'b']], edges: [['B', 'D', d, -1], ['A', 'B', s, 1]] }) };
+  }
+});
+
+def('S-H8', 'S', 2, () => {
+  const [a, b, c] = pick([[3, 4, 5], [4, 3, 5], [6, 8, 10], [8, 6, 10], [5, 12, 13], [12, 5, 13], [9, 12, 15], [12, 9, 15]]);
+  const bd = F(a * c, a + b), ad = F(a * b * 2, a + b);
+  // AD = sqrt(2)*ab/(a+b)
+  const co = F(a * b, a + b);
+  const A = [0, 0], B = [a, 0], C = [0, b]; const D = lerp(B, C, a / (a + b));
+  return { q: M('∠§A§ = 90°, §AB§ = ' + a + ', §AC§ = ' + b + '인 직각삼각형 §ABC§에서 ∠§A§의 이등분선이 빗변 §BC§와 만나는 점을 §D§라 할 때, §BD§와 §AD§의 길이를 구하시오.'),
+    a: '§BD§ = ' + fmt(bd) + ', §AD§ = ' + fmt(co) + '√2', h: '§D§에서 §AB§, §AC§에 내린 수선의 발과 §A§를 이으면 정사각형: 한 변 ' + fmt(co), p: { a, b, c, bd, co },
+    svg: fig({ pts: { A, B, C, D, E: [D[0], 0], F: [0, D[1]] }, polys: [['A', 'B', 'C']], segs: [['A', 'D']], fills: [{ p: ['A', 'E', 'D', 'F'] }], rights: [['A', 'B', 'C']], edges: [['A', 'B', a, -1], ['A', 'C', b, 1]], hide: [] }) };
+});
+
+def('S-H9', 'S', 2, () => {
+  const a = ri(3, 9), b = a + 2 * ri(1, 6);
+  const T = trapPts(a, b);
+  const E = mid(T.A, T.B), Fp = mid(T.D, T.C), Mv = mid(T.B, T.D);
+  return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ = ' + a + ', §BC§ = ' + b + '이다. 대각선 §BD§의 중점 §M§을 지나고 §BC§에 평행한 직선이 §AB§, §DC§와 만나는 점을 각각 §E§, §F§라 할 때, §EF§의 길이를 구하시오.'),
+    a: fmt(F(a + b, 2)), h: '§E§, §F§는 각각 §AB§, §DC§의 중점 → §EM§ = ½§AD§, §MF§ = ½§BC§', p: { a, b },
+    svg: fig({ pts: { A: T.A, B: T.B, C: T.C, D: T.D, M: Mv, E, F: Fp }, polys: [['A', 'B', 'C', 'D']], segs: [['B', 'D', 'd'], ['E', 'F', 'b']], edges: [['A', 'D', a, 1], ['B', 'C', b, -1]], inner: ['M'], off: { E: [-12, 0], F: [12, 0], M: [0, 14] } }) };
+});
+
+def('S-H10', 'S', 2, () => {
+  const S = 3 * ri(8, 30);
+  const A = [2, 8], B = [0, 0], C = [10, 0]; const Mv = mid(A, B), N = mid(A, C); const Gp = [(A[0] + B[0] + C[0]) / 3, A[1] / 3];
+  return { q: M('넓이가 ' + S + '인 삼각형 §ABC§의 무게중심을 §G§, 변 §AB§, §AC§의 중점을 각각 §M§, §N§이라 할 때, 사각형 §AMGN§의 넓이를 구하시오.'),
+    a: String(S / 3), h: '세 중선으로 나누어진 6개의 삼각형은 넓이가 모두 같다 (각 ' + (S / 6) + ')', p: { S },
+    svg: fig({ pts: { A, B, C, M: Mv, N, G: Gp, D: mid(B, C) }, polys: [['A', 'B', 'C']], segs: [['B', 'N'], ['C', 'M'], ['A', 'D']], fills: [{ p: ['A', 'M', 'G', 'N'] }], inner: ['G'], hide: ['D'], off: { M: [-12, 0], N: [12, 0], G: [4, 14] } }) };
+});
+
+def('S-H11', 'S', 2, () => {
+  const N = pick([50, 100, 200, 500]), s = ri(2, 9) * 10, v = ri(2, 9) * 10;
+  const sm2 = (s * N * N) / 1e4, vm3 = (v * N * N * N) / 1e6;
+  return { q: '어떤 건물의 모형을 축척 1 : ' + N + '로 만들었더니 모형의 겉넓이가 ' + s + ' cm², 부피가 ' + v + ' cm³였다. 실제 건물의 겉넓이는 몇 m²이고, 부피는 몇 m³인가?',
+    a: '겉넓이 ' + decStr(sm2) + ' m², 부피 ' + decStr(vm3) + ' m³', h: '길이의 비 1 : ' + N + ' → 넓이의 비 1 : ' + (N * N) + ', 부피의 비 1 : ' + (N ** 3), p: { N, s, v, sm2, vm3 } };
+});
+
+def('S-H12', 'S', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const [u, v] = pick([[1, 2], [1, 3], [2, 3], [3, 4], [1, 4]]);
+    const a = ri(2, 6) * 2, h = ri(2, 6) * 2;
+    // 두 대각선의 교점 O, 평행선 사이 닮음; 삼각형 AOB 넓이 구하기
+    const b = a * v / u; if (!Number.isInteger(b)) continue;
+    const T = (a + b) * h / 2; const aob = F(a * b * h, a + b).div(1).mul(F(1, 2));
+    const T2 = trapPts(a, b), O = inter(T2.A, T2.C, T2.B, T2.D);
+    return { q: M('사다리꼴 §ABCD§에서 §AD§ ∥ §BC§, §AD§ : §BC§ = ' + u + ' : ' + v + '이고 사다리꼴의 넓이는 ' + fmt(F((a + b) * h, 2)) + '이다. 두 대각선의 교점을 §O§라 할 때, △§AOB§의 넓이를 구하시오.'),
+      a: fmt(aob), h: '넓이의 비 △§AOD§ : △§AOB§ : △§BOC§ = ' + (u * u) + ' : ' + (u * v) + ' : ' + (v * v), p: { u, v, T, aob },
+      svg: fig({ pts: { A: T2.A, B: T2.B, C: T2.C, D: T2.D, O }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], fills: [{ p: ['A', 'B', 'O'], c: '#fde68a' }], inner: ['O'], off: { O: [0, -12] } }) };
+  }
+});
+
+
+/* ================= app ================= */
+const $ = (id) => document.getElementById(id);
+const LV = ['하', '중', '상'], UN = { L: '일차함수', S: '닮음·도형' };
+const COLORS = ['#34d399', '#60a5fa', '#f87171'];
+let CUR = null;
+
+function norm(arr) { const s = arr.reduce((a, b) => a + b, 0); return s > 0 ? arr.map((x) => x / s) : arr.map(() => 1 / arr.length); }
+function readCfg() {
+  return {
+    total: Math.max(1, Math.min(60, parseInt($('total').value) || 20)),
+    u: norm([+$('uL').value, +$('uS').value]),
+    l: norm([+$('l0').value, +$('l1').value, +$('l2').value]),
+    order: $('order').value, cols: $('cols').value, space: +$('space').value,
+    fig: $('showfig').checked, tag: $('showtag').checked, hint: $('showhint').checked, star: $('usestar').checked,
+    title: $('title').value || '문제지', seed: parseInt($('seed').value) || 1
+  };
+}
+function allocate(cfg) {
+  const cells = [];
+  ['L', 'S'].forEach((u, ui) => [0, 1, 2].forEach((lv) => cells.push({ u, lv, w: cfg.u[ui] * cfg.l[lv] })));
+  const raw = cells.map((c) => c.w * cfg.total);
+  const base = raw.map(Math.floor);
+  let rest = cfg.total - base.reduce((a, b) => a + b, 0);
+  const idx = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]);
+  for (let k = 0; k < rest; k++) base[idx[k % idx.length][1]]++;
+  cells.forEach((c, i) => { c.n = base[i]; });
+  return cells;
+}
+function poolOf(u, lv, cfg) { return BANK.filter((g) => g.u === u && g.lv === lv && (cfg.star || !g.star)); }
+
+function renderControls() {
+  const cfg = readCfg();
+  $('uLv').textContent = Math.round(cfg.u[0] * 100) + '%';
+  $('uSv').textContent = Math.round(cfg.u[1] * 100) + '%';
+  [0, 1, 2].forEach((i) => { $('l' + i + 'v').textContent = Math.round(cfg.l[i] * 100) + '%'; });
+  $('lbar').innerHTML = cfg.l.map((x, i) => '<i style="width:' + (x * 100) + '%;background:' + COLORS[i] + '"></i>').join('');
+  $('llegend').textContent = '하 ' + Math.round(cfg.l[0] * 100) + '% · 중 ' + Math.round(cfg.l[1] * 100) + '% · 상 ' + Math.round(cfg.l[2] * 100) + '%';
+  const cells = allocate(cfg);
+  const g = (u, lv) => cells.find((c) => c.u === u && c.lv === lv);
+  let h = '<table class="alloc"><tr><th></th><th>하</th><th>중</th><th>상</th><th>합계</th></tr>';
+  ['L', 'S'].forEach((u) => {
+    const sum = [0, 1, 2].reduce((a, lv) => a + g(u, lv).n, 0);
+    h += '<tr><th>' + UN[u] + '</th>' + [0, 1, 2].map((lv) => { const c = g(u, lv); const pl = poolOf(u, lv, cfg).length; return '<td>' + c.n + '<div class="note">유형 ' + pl + '</div></td>'; }).join('') + '<td><b>' + sum + '</b></td></tr>';
+  });
+  h += '</table><div class="note" style="margin-top:6px">칸 안의 “유형”은 해당 칸에서 뽑을 수 있는 서로 다른 문제 유형 수입니다. 문항 수가 유형 수보다 많으면 같은 유형을 숫자만 바꿔 다시 냅니다.</div>';
+  $('alloc').innerHTML = h;
+}
+
+function buildSet(cfg) {
+  setSeed(cfg.seed);
+  const cells = allocate(cfg);
+  const items = [];
+  cells.forEach((c) => {
+    if (!c.n) return;
+    let pool = poolOf(c.u, c.lv, cfg);
+    if (!pool.length) pool = BANK.filter((g) => g.lv === c.lv && (cfg.star || !g.star));
+    let bag = [];
+    for (let i = 0; i < c.n; i++) {
+      if (!bag.length) bag = shuffle(pool);
+      const g = bag.pop();
+      let out = null;
+      for (let t = 0; t < 5 && !out; t++) out = g.g();
+      if (out) items.push({ id: g.id, u: g.u, lv: g.lv, out });
+    }
+  });
+  if (cfg.order === 'level') items.sort((a, b) => a.lv - b.lv);
+  else if (cfg.order === 'unit') items.sort((a, b) => (a.u === b.u ? a.lv - b.lv : a.u < b.u ? -1 : 1));
+  else { const s = shuffle(items); items.length = 0; s.forEach((x) => items.push(x)); }
+  // keep stable order within equal keys already by sort stability
+  return items;
+}
+
+function sheetHeader(cfg, kind) {
+  const code = String(cfg.seed);
+  return '<header><div class="ttl"><span>' + esc(cfg.title) + (kind === 'A' ? ' · 정답과 풀이' : '') + '</span><span style="font-size:10pt;font-weight:400">시험 코드 ' + code + '</span></div>' +
+    (kind === 'Q' ? '<div class="meta"><span>학교/학년/반</span><span>이름</span><span class="s">점수</span></div><div class="guide">※ 그림은 실제 길이와 다를 수 있습니다. 풀이 과정을 쓰시오. (총 ' + CUR.items.length + '문항)</div>' : '<div class="guide">※ 문제지(시험 코드 ' + code + ')와 짝이 되는 답안지입니다.</div>') + '</header>';
+}
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+function render() {
+  if (!CUR) return;
+  const cfg = CUR.cfg, items = CUR.items;
+  const q = $('sheetQ'), a = $('sheetA');
+  q.className = 'sheet' + (cfg.cols === '2' ? ' cols2' : '') + (q.classList.contains('show') ? ' show' : '');
+  a.className = 'sheet cols2' + (a.classList.contains('show') ? ' show' : '');
+  let hq = sheetHeader(cfg, 'Q') + '<ol class="probs">';
+  let ha = sheetHeader(cfg, 'A') + '<ol class="probs ans-list">';
+  items.forEach((it, i) => {
+    const no = i + 1;
+    const tag = cfg.tag ? '<span class="tag">' + LV[it.lv] + '</span>' : '';
+    const svg = cfg.fig && it.out.svg ? '<div class="fig">' + it.out.svg + '</div>' : '';
+    hq += '<li class="prob"><span class="no">' + no + '.</span><div class="body"><div>' + it.out.q + tag + '</div>' + svg + (cfg.space ? '<span class="space" style="height:' + cfg.space + 'mm"></span>' : '') + '</div></li>';
+    ha += '<li class="prob"><span class="no">' + no + '.</span><div class="body"><div class="arow"><b>' + M(it.out.a) + '</b></div>' + (cfg.hint && it.out.h ? '<div class="hint">' + M(it.out.h) + '</div>' : '') + '</div></li>';
+  });
+  q.innerHTML = hq + '</ol>';
+  a.innerHTML = ha + '</ol>';
+}
+
+function generate(newSeed) {
+  if (newSeed) $('seed').value = Math.floor(Math.random() * 900000) + 100000;
+  const cfg = readCfg();
+  CUR = { cfg, items: buildSet(cfg) };
+  render();
+  try { localStorage.setItem('exam2-2', JSON.stringify({ total: cfg.total, uL: $('uL').value, uS: $('uS').value, l0: $('l0').value, l1: $('l1').value, l2: $('l2').value, title: cfg.title })); } catch (e) { }
+}
+
+function show(which) {
+  $('sheetQ').classList.toggle('show', which === 'Q'); $('sheetA').classList.toggle('show', which === 'A');
+  $('tabQ').classList.toggle('on', which === 'Q'); $('tabA').classList.toggle('on', which === 'A');
+}
+function printSheet(which) {
+  if (!CUR) generate(true);
+  show(which);
+  document.body.className = 'print-' + which.toLowerCase();
+  setTimeout(() => {
+    let ok = true;
+    try { window.print(); } catch (e) { ok = false; }
+    document.body.className = '';
+    if (!ok || window.self !== window.top) {
+      alert('인쇄 창이 열리지 않으면, 미리보기/메신저 안에서 연 상태일 수 있습니다.\n파일을 다운로드해서 크롬·엣지 브라우저로 직접 연 뒤 다시 눌러 주세요.\n(또는 Ctrl+P / ⌘+P)');
+    }
+  }, 50);
+}
+window.addEventListener('afterprint', () => { document.body.className = ''; });
+
+['total', 'uL', 'uS', 'l0', 'l1', 'l2'].forEach((id) => $(id).addEventListener('input', renderControls));
+['total', 'uL', 'uS', 'l0', 'l1', 'l2'].forEach((id) => $(id).addEventListener('change', () => { renderControls(); generate(false); }));
+['order', 'cols', 'space', 'showfig', 'showtag', 'showhint', 'usestar', 'title'].forEach((id) => $(id).addEventListener('change', () => { renderControls(); generate(false); }));
+$('title').addEventListener('input', () => { if (CUR) { CUR.cfg.title = $('title').value || '문제지'; render(); } });
+$('gen').addEventListener('click', () => generate(true));
+$('regen').addEventListener('click', () => generate(false));
+$('seed').addEventListener('change', () => generate(false));
+$('pq').addEventListener('click', () => printSheet('Q'));
+$('pa').addEventListener('click', () => printSheet('A'));
+$('tabQ').addEventListener('click', () => show('Q'));
+$('tabA').addEventListener('click', () => show('A'));
+document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => {
+  const [a, b, d] = c.dataset.p.split(',').map(Number); $('l0').value = a; $('l1').value = b; $('l2').value = d; renderControls(); generate(false);
+}));
+
+try {
+  const sv = JSON.parse(localStorage.getItem('exam2-2') || 'null');
+  if (sv) { ['total', 'uL', 'uS', 'l0', 'l1', 'l2', 'title'].forEach((k) => { if (sv[k] !== undefined) $(k).value = sv[k]; }); }
+} catch (e) { }
+renderControls();
+generate(true);
+</script>
+</body>
+</html>
