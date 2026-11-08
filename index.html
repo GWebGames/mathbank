@@ -106,7 +106,7 @@ table.alloc th{background:#f9fafb;font-weight:600}
 var{font-style:italic;font-family:"Times New Roman",Georgia,serif;font-size:1.05em}
 .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.15;font-size:.9em;margin:0 .12em}
 .fr i{font-style:normal;padding:0 .2em}.fr i:first-child{border-bottom:1px solid currentColor}
-.rad{border-top:1px solid currentColor;padding:0 .1em;margin-left:.04em}
+.rad{display:inline-block;line-height:1.02;border-top:1px solid currentColor;padding:.02em .12em 0 .1em;margin-left:-.12em;vertical-align:baseline}
 .sys{display:inline-block;vertical-align:middle;border-left:1.5px solid #000;padding-left:6px;line-height:1.6;margin:0 3px}
 sub{font-size:.7em}
 .empty{padding:40px;text-align:center;color:var(--soft)}
@@ -1129,7 +1129,7 @@ def('S-H12', 'S', 2, () => {
 });
 
 /* 무게중심·피타고라스 정리 유형은 제외 */
-['S-E2', 'S-M11', 'S-H3', 'S-H10', 'L-M12', 'L-H2', 'S-E11', 'S-M5', 'S-M6', 'S-H8'].forEach((id) => {
+['S-E2', 'S-M11', 'S-H3', 'S-H10', 'L-M12', 'L-H2', 'S-E11', 'S-M5', 'S-M6', 'S-H8', 'S-H7'].forEach((id) => {
   const i = BANK.findIndex((b) => b.id === id); if (i >= 0) BANK.splice(i, 1);
 });
 
@@ -2202,30 +2202,29 @@ def('P-E1', 'P', 0, () => {
     svg: fig({ pts: { C: [0, 0], B: [BC, 0], A: [0, AC] }, polys: [['A', 'B', 'C']], rights: [['C', 'A', 'B']], edges: known.map((k) => (k === 'AB' ? ['A', 'B', AB, 1] : k === 'AC' ? ['C', 'A', AC, 1] : ['C', 'B', BC, -1])) }) };
 });
 def('P-E2', 'P', 0, () => {
-  if (rng() < 0.5) { const a = ri(2, 12); return { q: '한 변의 길이가 ' + a + ' cm인 정사각형의 대각선의 길이를 구하시오.', a: sq2(a) + ' cm', h: '대각선의 길이 = (한 변) × √2', p: { t: 0, a, ans2: 2 * a * a } }; }
-  const [w, h, d] = scaled(false);
-  return { q: '가로의 길이가 ' + w + ' cm, 세로의 길이가 ' + h + ' cm인 직사각형의 대각선의 길이를 구하시오.', a: d + ' cm', h: '대각선의 길이 = √(가로² + 세로²)', p: { t: 1, w, h, ans: d } };
+  const [w, h, d] = scaled(false), ask = pick([0, 1]);
+  return { q: '가로의 길이가 ' + w + ' cm, 세로의 길이가 ' + h + ' cm인 직사각형의 대각선의 길이를 구하시오.', a: d + ' cm', h: '(대각선)² = (가로)² + (세로)²', p: { w, h, ans: d },
+    svg: fig({ pts: { A: [0, h], B: [0, 0], C: [w, 0], D: [w, h] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C', 'd']], edges: [['B', 'C', w + ' cm', -1], ['A', 'B', h + ' cm', 1]] }) };
 });
 def('P-E3', 'P', 0, () => {
-  const k = ri(1, 9), a = 2 * k, ask = pick([0, 1]);
-  return { q: '한 변의 길이가 ' + a + ' cm인 정삼각형의 ' + (ask ? '넓이' : '높이') + '를 구하시오.', a: ask ? sq3(k * k) + ' cm²' : sq3(k) + ' cm',
-    h: ask ? '(정삼각형의 넓이) = (√3/4) × (한 변)²' : '(정삼각형의 높이) = (√3/2) × (한 변)', p: { a, ask, k, ans3: ask ? k * k : k },
-    svg: fig({ pts: { A: [0, Math.sqrt(3)], B: [-1, 0], C: [1, 0] }, polys: [['A', 'B', 'C']], edges: [['B', 'C', a + ' cm', -1]] }) };
+  const [a, b, c] = scaled(false), ask = pick([0, 1]), L = ask ? [c, a] : [c, b], key = ask ? b : a;
+  return { q: '∠C = 90°인 직각삼각형 ABC에서 빗변 AB = ' + c + ' cm, BC = ' + (ask ? a : b) + ' cm일 때, 이 삼각형의 ' + (ask ? '넓이' : '둘레의 길이') + '를 구하시오.', a: ask ? (a * key / 2) + ' cm²' : (a + b + c) + ' cm',
+    h: 'AC² = AB² − BC² = ' + (ask ? b : a) + '²이므로 AC = ' + (ask ? b : a) + ' cm', p: { a, b, c, ask, ans: ask ? a * b / 2 : a + b + c } };
 });
 def('P-E4', 'P', 0, () => {
   const [a, b, c] = scaled(false), ask = pick([0, 1]);
   return { q: '직각을 낀 두 변의 길이가 ' + a + ' cm, ' + b + ' cm인 직각삼각형의 ' + (ask ? '둘레의 길이' : '넓이') + '를 구하시오.',
-    a: ask ? (a + b + c) + ' cm' : (a * b / 2) + ' cm²', h: '빗변의 길이 = √(' + a + '² + ' + b + '²) = ' + c, p: { a, b, c, ask, ans: ask ? a + b + c : a * b / 2 }, svg: triFig(a, b, [['A', 'B', a, -1], ['A', 'C', b, 1]]) };
+    a: ask ? (a + b + c) + ' cm' : (a * b / 2) + ' cm²', h: '(빗변)² = ' + a + '² + ' + b + '² = ' + c * c + '이므로 빗변 = ' + c, p: { a, b, c, ask, ans: ask ? a + b + c : a * b / 2 }, svg: triFig(a, b, [['A', 'B', a, -1], ['A', 'C', b, 1]]) };
 });
 def('P-E5', 'P', 0, () => {
   const [a, b, c] = scaled(false), sx = pick([1, -1]), sy = pick([1, -1]), x1 = ri(-4, 4), y1 = ri(-4, 4), sw = pick([0, 1]);
   const dx = (sw ? b : a) * sx, dy = (sw ? a : b) * sy;
   return { q: '좌표평면 위의 두 점 A(' + num(x1) + ', ' + num(y1) + '), B(' + num(x1 + dx) + ', ' + num(y1 + dy) + ') 사이의 거리를 구하시오.', a: String(c),
-    h: 'AB = √((x좌표의 차)² + (y좌표의 차)²)', p: { x1, y1, x2: x1 + dx, y2: y1 + dy, ans: c } };
+    h: 'AB² = (x좌표의 차)² + (y좌표의 차)²', p: { x1, y1, x2: x1 + dx, y2: y1 + dy, ans: c } };
 });
 def('P-E6', 'P', 0, () => {
   const [a, b, c] = pick([[1, 2, 2], [2, 3, 6], [2, 4, 4], [4, 4, 7], [1, 4, 8], [2, 6, 9], [6, 6, 7], [2, 10, 11]]), t = shuffle([a, b, c]), d = Math.sqrt(a * a + b * b + c * c);
-  return { q: '가로, 세로, 높이가 각각 ' + t[0] + ' cm, ' + t[1] + ' cm, ' + t[2] + ' cm인 직육면체의 대각선의 길이를 구하시오.', a: d + ' cm', h: '대각선의 길이 = √(가로² + 세로² + 높이²)', p: { a: t[0], b: t[1], c: t[2], ans: d } };
+  return { q: '가로, 세로, 높이가 각각 ' + t[0] + ' cm, ' + t[1] + ' cm, ' + t[2] + ' cm인 직육면체의 대각선의 길이를 구하시오.', a: d + ' cm', h: '(대각선)² = 가로² + 세로² + 높이²', p: { a: t[0], b: t[1], c: t[2], ans: d } };
 });
 def('P-E7', 'P', 0, () => {
   const target = pick(['예각삼각형', '직각삼각형', '둔각삼각형']);
@@ -2243,21 +2242,21 @@ def('P-E7', 'P', 0, () => {
 def('P-E8', 'P', 0, () => {
   const [b, h, a] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]]), ask = pick([0, 1]);
   return { q: '삼각형 ABC에서 AB = AC = ' + a + ' cm, BC = ' + 2 * b + ' cm일 때, ' + (ask ? '넓이' : '꼭짓점 A에서 BC에 내린 수선 AH의 길이') + '를 구하시오.', a: ask ? (b * h) + ' cm²' : h + ' cm',
-    h: 'H는 BC의 중점이므로 BH = ' + b + ' cm이고 △ABH에서 AH = √(AB² − BH²)', p: { a, b, h, ask, ans: ask ? b * h : h },
+    h: 'H는 BC의 중점이므로 BH = ' + b + ' cm이고 △ABH에서 AH² = AB² − BH²', p: { a, b, h, ask, ans: ask ? b * h : h },
     svg: fig({ pts: { A: [0, h], B: [-b, 0], C: [b, 0], H: [0, 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'H', 'd']], rights: [['H', 'A', 'C']], edges: [['A', 'B', a, 1], ['B', 'C', 2 * b, -1]], off: { H: [12, -8] } }) };
 });
 def('P-M1', 'P', 1, () => {
   const [s, h, c] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10]]), k = ri(1, 2), a = ri(3, 10);
   const S = s * k, H = h * k, C = c * k, b = a + 2 * S, area = (a + b) * H / 2;
   return { q: '사다리꼴 ABCD에서 AD // BC, AB = DC = ' + C + ' cm, AD = ' + a + ' cm, BC = ' + b + ' cm일 때, 이 사다리꼴의 넓이를 구하시오.', a: area + ' cm²',
-    h: 'A, D에서 BC에 내린 수선의 발을 H, H′라 하면 BH = (BC − AD)/2 = ' + S + ' cm이고 높이 AH = √(AB² − BH²)', p: { a, b, C, S, H, ans: area },
+    h: 'A, D에서 BC에 내린 수선의 발을 H, H′라 하면 BH = (BC − AD)/2 = ' + S + ' cm이고 높이 AH² = AB² − BH²', p: { a, b, C, S, H, ans: area },
     svg: fig({ pts: { A: [S, H], D: [S + a, H], B: [0, 0], C: [b, 0] }, polys: [['A', 'B', 'C', 'D']], edges: [['A', 'D', a, 1], ['B', 'C', b, -1], ['A', 'B', C, 1]] }) };
 });
 def('P-M2', 'P', 1, () => {
   const [l1, l2, q0] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17]]), k = ri(1, 2), sw = pick([0, 1]);
   const pp = (sw ? l2 : l1) * k, r = (sw ? l1 : l2) * k, q = q0 * k, CF = q - r, x = F(pp * pp + CF * CF, 2 * pp);
   return { q: '그림과 같이 AB = ' + pp + ' cm, BC = ' + q + ' cm인 직사각형 ABCD를 꼭짓점 D가 변 BC 위의 점 F에 오도록 접었다. 접는 선이 변 CD와 만나는 점을 E라 할 때, DE의 길이를 구하시오.', a: fmt(x) + ' cm',
-    h: 'AF = AD = ' + q + '이므로 BF = √(AF² − AB²) = ' + r + ', FC = ' + CF + '. DE = EF = ' + V('x') + '라 하면 △EFC에서 (' + pp + ' − ' + V('x') + ')² + ' + CF + '² = ' + V('x') + '²', p: { AB: pp, BC: q, BF: r, CF, x: x.n + '/' + x.d },
+    h: 'AF = AD = ' + q + '이므로 BF² = AF² − AB²이므로 BF = ' + r + ', FC = ' + CF + '. DE = EF = ' + V('x') + '라 하면 △EFC에서 (' + pp + ' − ' + V('x') + ')² + ' + CF + '² = ' + V('x') + '²', p: { AB: pp, BC: q, BF: r, CF, x: x.n + '/' + x.d },
     svg: fig({ pts: { A: [0, pp], B: [0, 0], C: [q, 0], D: [q, pp], F: [r, 0], E: [q, pp - x.val()] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'F', 'b'], ['E', 'F', 'b'], ['A', 'E', 'd']], edges: [['A', 'B', pp, 1], ['B', 'C', q, -1]], off: { E: [12, 0] } }) };
 });
 def('P-M3', 'P', 1, () => {
@@ -2288,7 +2287,7 @@ def('P-M7', 'P', 1, () => {
   const [r, h, l] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]]), ask = pick([0, 1]);
   const V3 = r * r * h / 3;
   return { q: '밑면의 반지름의 길이가 ' + r + ' cm이고 모선의 길이가 ' + l + ' cm인 원뿔의 ' + (ask ? '부피' : '높이') + '를 구하시오.', a: ask ? V3 + 'π cm³' : h + ' cm',
-    h: '(원뿔의 높이) = √(모선² − 밑면의 반지름²) = ' + h + (ask ? ', (부피) = ⅓ × π × r² × h' : ''), p: { r, l, h, ask, V3, ans: ask ? V3 : h },
+    h: '(높이)² = (모선)² − (밑면의 반지름)²이므로 높이 = ' + h + (ask ? ', (부피) = ⅓ × π × r² × h' : ''), p: { r, l, h, ask, V3, ans: ask ? V3 : h },
     svg: fig({ pts: { O: [0, 0], A: [-r, 0], B: [r, 0], T: [0, h] }, polys: [['A', 'B', 'T']], segs: [['O', 'T', 'd']], rights: [['O', 'B', 'T']], edges: [['B', 'T', l, -1], ['O', 'B', r, -1]], off: { O: [0, 14] } }) };
 });
 def('P-M8', 'P', 1, () => {
@@ -2296,11 +2295,13 @@ def('P-M8', 'P', 1, () => {
   // 아랫부분 p1, 높이 q1 → 윗부분이 (q1−q2) 내려오면 아랫부분 p2
   const down = q1 - q2, out = p2 - p1; if (down <= 0 || out <= 0) return retry('P-M8');
   return { q: '길이가 ' + L + ' m인 사다리가 벽에 기대어 있고, 사다리의 아랫부분은 벽에서 ' + p1 + ' m 떨어져 있다. 사다리의 윗부분이 ' + down + ' m 미끄러져 내려올 때, 사다리의 아랫부분은 몇 m 밀려나는지 구하시오.', a: out + ' m',
-    h: '처음 높이 = √(' + L + '² − ' + p1 + '²) = ' + q1 + ' m, 나중 높이 = ' + q2 + ' m이므로 나중 거리 = √(' + L + '² − ' + q2 + '²) = ' + p2 + ' m', p: { L, p1, q1, q2, p2, down, ans: out } };
+    h: '처음 높이² = ' + L + '² − ' + p1 + '²이므로 ' + q1 + ' m, 나중 높이 = ' + q2 + ' m이므로 나중 거리² = ' + L + '² − ' + q2 + '²이므로 ' + p2 + ' m', p: { L, p1, q1, q2, p2, down, ans: out } };
 });
 def('P-H1', 'P', 2, () => {
-  const k = ri(2, 9);
-  return { q: '높이가 ' + sq3(k) + ' cm인 정삼각형의 넓이를 구하시오.', a: sq3(k * k) + ' cm²', h: '한 변의 길이를 ' + V('a') + '라 하면 (√3/2)' + V('a') + ' = ' + k + '√3이므로 ' + V('a') + ' = ' + 2 * k, p: { k, ans3: k * k } };
+  const [p, q, r] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10]]), k = ri(1, 3), ask = pick([0, 1]);
+  const half = [p * k, q * k], side = r * k, d1 = 2 * half[0], d2 = 2 * half[1];
+  return { q: '한 변의 길이가 ' + side + ' cm이고 한 대각선의 길이가 ' + d1 + ' cm인 마름모에서, ' + (ask ? '다른 대각선의 길이' : '마름모의 넓이') + '를 구하시오.', a: ask ? d2 + ' cm' : (d1 * d2 / 2) + ' cm²',
+    h: '두 대각선은 수직이등분하므로 (다른 대각선의 절반)² = ' + side + '² − ' + half[0] + '²', p: { side, d1, d2, ask, ans: ask ? d2 : d1 * d2 / 2 } };
 });
 def('P-H2', 'P', 2, () => {
   for (let i = 0; i < 400; i++) {
@@ -2618,12 +2619,8 @@ DIST['R-H4'] = (p, o) => { const ac = p.ans / 2; return _n(o, [ac, 4 * ac, 2 * a
 
 /* ---------- P 피타고라스 정리 ---------- */
 DIST['P-E1'] = (p, o) => { const ks = { AB: p.AB, AC: p.AC, BC: p.BC }, kn = ['AB', 'AC', 'BC'].filter((k) => k !== p.key).map((k) => ks[k]); return _n(o, [kn[0] + kn[1], Math.abs(kn[0] - kn[1]), p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, Math.max(...kn) + 1]); };
-DIST['P-E2'] = (p, o) => (p.t === 0
-  ? [p.a + sqrtH(3) + ' cm', sq2(2 * p.a) + ' cm', 2 * p.a + ' cm', p.a * p.a + ' cm', sqrtH(2 * p.a) + ' cm', sq2(p.a + 1) + ' cm', p.a + sqrtH(2 * p.a) + ' cm']
-  : _n(o, [p.w + p.h, p.w * p.h, p.ans + 1, Math.abs(p.w - p.h), p.ans - 1, p.ans + 2, p.ans - 2]));
-DIST['P-E3'] = (p) => (p.ask
-  ? [sq3(p.k) + ' cm²', sq3(2 * p.k * p.k) + ' cm²', sq3(4 * p.k * p.k) + ' cm²', sq3(3 * p.k * p.k) + ' cm²', sq2(p.k * p.k) + ' cm²', sq3(p.k * p.k + 1) + ' cm²', sq3(p.k * p.k * 2 + 1) + ' cm²']
-  : [sq3(p.a) + ' cm', sq3(p.k + 1) + ' cm', sq2(p.k) + ' cm', sq3(p.k * p.k) + ' cm', p.k + ' cm', sq3(p.a + 1) + ' cm', sq2(p.a) + ' cm']);
+DIST['P-E2'] = (p, o) => _n(o, [p.w + p.h, p.w * p.h, p.ans + 1, Math.abs(p.w - p.h), p.ans - 1, p.ans + 2, p.ans - 2]);
+DIST['P-E3'] = (p, o) => (p.ask ? _n(o, [p.a * p.b, p.a * p.c / 2, p.a + p.b + p.c, p.ans + 2, p.ans - 2, p.ans * 2, p.b * p.c / 2]) : _n(o, [p.a + p.b, p.ans + p.c, p.a * p.b / 2, p.ans + 2, p.ans - 2, 2 * (p.a + p.b), p.ans - p.c]));
 DIST['P-E4'] = (p, o) => (p.ask ? _n(o, [p.a + p.b, p.a * p.b / 2, 2 * (p.a + p.b), p.a + p.b + 2 * p.c, p.ans + 2, p.ans - 2, p.ans + 4]) : _n(o, [p.a * p.b, p.a + p.b + p.c, p.a * p.b / 4, p.a * p.b / 2 + p.c, p.ans + 2, p.ans - 2, p.a * p.b / 2 + p.a]));
 DIST['P-E5'] = (p, o) => { const dx = Math.abs(p.x2 - p.x1), dy = Math.abs(p.y2 - p.y1); return _n(o, [dx + dy, Math.abs(dx - dy), p.ans + 1, p.ans - 1, p.ans * p.ans, dx * dy, p.ans + 2, p.ans - 2]); };
 DIST['P-E6'] = (p, o) => _n(o, [p.a + p.b + p.c, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, p.ans * 2, p.ans + 3, p.a * p.b * p.c]);
@@ -2637,7 +2634,7 @@ DIST['P-M5'] = (p, o) => _n(o, [p.w * p.d, p.w * p.h / 2, p.w * p.h * 2, p.d * p
 DIST['P-M6'] = (p, o) => _n(o, [3 * p.k, 4 * p.k, 6 * p.k, 5 * p.k + 1, 5 * p.k - 1, 7 * p.k, 5 * p.k + 2, 4 * p.k + 1]);
 DIST['P-M7'] = (p, o) => (p.ask ? _n(o, [p.r * p.r * p.h, (p.r * p.r * p.l) / 3, (2 * p.r * p.r * p.h) / 3, (p.r * p.h) / 3, p.V3 + p.r, p.V3 - p.r, p.V3 * 3 + 1]) : _n(o, [p.l - p.r, p.l, p.r, p.h + 1, p.h - 1, p.h + 2, p.l + p.r]));
 DIST['P-M8'] = (p, o) => _n(o, [p.down, p.p2, p.p1, p.p2 + p.p1, p.ans + 1, p.ans - 1, p.ans + 2, p.q1 - p.q2 + 4]);
-DIST['P-H1'] = (p) => [sq3(p.k) + ' cm²', sq3(2 * p.k) + ' cm²', sq3(4 * p.k * p.k) + ' cm²', sq3(3 * p.k * p.k) + ' cm²', sq3(2 * p.k * p.k) + ' cm²', sq3(p.k * p.k + p.k) + ' cm²', sq2(p.k * p.k) + ' cm²'];
+DIST['P-H1'] = (p, o) => (p.ask ? _n(o, [p.side, p.d1, p.side * 2 - p.d1, p.ans + 2, p.ans - 2, p.d1 + 2, 2 * p.side - p.d1 + 2, p.ans + 4]) : _n(o, [p.d1 * p.ans, p.side * p.side, p.d1 * p.ans / 4, p.side * p.d1 / 2, p.ans + 6, p.ans - 6, p.side * p.ans / 2]));
 DIST['P-H2'] = (p, o) => _n(o, [p.a + p.c - p.b, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, p.a + p.b - p.c, p.b + p.c - p.a, p.ans * 2]);
 DIST['P-H3'] = (p, o) => { const { a, b, c } = p, v = p.ask === 'BD' ? F(a * a, c) : F(b * b, c), w = p.ask === 'BD' ? F(b * b, c) : F(a * a, c); return _n(o, [w, F(a * b, c), F(c, 2), v.mul(2), F(a, b).mul(a), v.add(1), v.sub(F(1, 2)), F(c * c, a * a + b * b + 1)]); };
 DIST['P-H4'] = (p, o) => { const { a, b } = p; return _n(o, [F(a * a + b * b, b), F(b, 2), F(b * b - a * a, 2 * b), F(a * a + b * b, 2 * a), F(a * a + b * b, 2 * b).add(1), F(a * a + b * b, 2 * b).sub(1), F(a + b, 2)]); };
@@ -2903,7 +2900,7 @@ function show(which) {
 }
 
 /* ================= QR · 채점 ================= */
-const BANK_VER = 'b5', ORD = { level: 'l', unit: 'u', mix: 'm' }, ORDR = { l: 'level', u: 'unit', m: 'mix' };
+const BANK_VER = 'b6', ORD = { level: 'l', unit: 'u', mix: 'm' }, ORDR = { l: 'level', u: 'unit', m: 'mix' };
 function payloadOf(cfg) { return ['EX22', BANK_VER, cfg.seed, cfg.total, cfg.raw.slice(0, 10).map((x) => Math.round(x).toString(36).padStart(2, '0')).join('')].concat(cfg.raw.slice(10)).concat(cfg.fraw).concat([ORD[cfg.order] || 'l', cfg.star ? 1 : 0]).join('.'); }
 function parsePayload(text) {
   const m = String(text).match(/EX22\.[A-Za-z0-9.]+/); if (!m) return null;
@@ -2942,7 +2939,7 @@ function loadCode(text) {
   applyPayload(pl); GR = { code: '', m: [] };
   if (msg) msg.textContent = '';
   show('G');
-  if (pl.ver !== BANK_VER && pl.ver !== 'b4' && pl.ver !== 'b2' && !(pl.ver === 'b3' && pl.fraw[0] === 0)) $('gmsg').textContent = '⚠ 이 문제지는 다른 버전의 프로그램으로 만들어져 문제·정답이 다를 수 있습니다.';
+  if (pl.ver !== BANK_VER) $('gmsg').textContent = '⚠ 이 문제지는 다른 버전의 프로그램으로 만들어져 문제·정답이 다를 수 있습니다.';
   return true;
 }
 function renderGrade() {
