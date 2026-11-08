@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>중2-2 문제지 생성기</title>
+<title>중2 문제지 생성기</title>
 <style>
 :root{--ink:#1f2937;--soft:#6b7280;--line:#e5e7eb;--acc:#2563eb;--accbg:#eff6ff;--bg:#f3f4f6}
 *{box-sizing:border-box}
@@ -33,6 +33,16 @@ button.pri:hover{background:#1d4ed8}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font-size:12px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
 .chip:hover{background:var(--accbg)}
+.ugrp{display:flex;align-items:center;gap:6px;margin:10px 0 2px;font-size:12.5px;font-weight:700;color:var(--soft)}
+.ugrp label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.urow{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:13px}
+.urow label{display:flex;align-items:center;gap:5px;width:140px;flex:none;cursor:pointer;white-space:nowrap}
+.urow input[type=range]{flex:1;min-width:60px}
+.urow .val{min-width:36px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+.urow.off{opacity:.45}
+.dd{position:relative;display:inline-block;line-height:1}
+.dd::before{content:"";position:absolute;top:-.12em;left:50%;width:.2em;height:.2em;margin-left:-.1em;border-radius:50%;background:currentColor}
+sup{font-size:.72em;line-height:0}
 table.alloc{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
 table.alloc th,table.alloc td{border:1px solid var(--line);padding:4px 6px;text-align:center}
 table.alloc th{background:#f9fafb;font-weight:600}
@@ -116,7 +126,7 @@ sub{font-size:.7em}
 <body>
 <div class="app">
   <aside class="panel noprint">
-    <h1>중2-2 문제지 생성기</h1>
+    <h1>중2 문제지 생성기</h1>
     <div class="sub">단원·난이도 비율을 정하면 문제를 무작위로 뽑고, 같은 유형은 숫자를 바꿔 정답도 자동으로 다시 계산합니다.</div>
 
     <div class="group">
@@ -125,10 +135,15 @@ sub{font-size:.7em}
     </div>
 
     <div class="group">
-      <h2>② 단원 비율</h2>
-      <div class="row"><label>일차함수</label><input id="uL" type="range" min="0" max="100" value="50"><span class="val" id="uLv"></span></div>
-      <div class="row"><label>닮음·도형</label><input id="uS" type="range" min="0" max="100" value="50"><span class="val" id="uSv"></span></div>
-      <div class="note">두 막대 값의 비율로 계산합니다. (예: 30과 70 → 30% : 70%)</div>
+      <h2>② 출제 단원 범위</h2>
+      <div class="chips" id="unitChips">
+        <span class="chip" data-r="1">중2-1 전체</span>
+        <span class="chip" data-r="2">중2-2 전체</span>
+        <span class="chip" data-r="all">중2 전체</span>
+        <span class="chip" data-r="none">모두 해제</span>
+      </div>
+      <div id="unitList"></div>
+      <div class="note" id="unote">체크한 단원에서만 출제하고, 막대 값의 비율대로 문항 수를 나눕니다. (피타고라스 정리는 기본으로 해제되어 있습니다.)</div>
     </div>
 
     <div class="group">
@@ -166,7 +181,7 @@ sub{font-size:.7em}
 
     <div class="group">
       <h2>⑥ 인쇄 옵션</h2>
-      <div class="row"><label>제목</label><input id="title" type="text" value="중2-2 단원평가"></div>
+      <div class="row"><label>제목</label><input id="title" type="text" value="중2 단원평가"></div>
       <div class="row"><label>정렬</label>
         <select id="order"><option value="level">난이도 낮은 순</option><option value="unit">단원별로 묶기</option><option value="mix">무작위 순서</option></select></div>
       <div class="row"><label>단 수</label>
@@ -484,7 +499,7 @@ def('L-E11', 'L', 0, () => {
   const p1 = [mx - hx, my - hy], p2 = [mx + hx, my + hy];
   const nb = my - s * mx;
   return { q: '두 점 ' + pt(p1[0], p1[1]) + ', ' + pt(p2[0], p2[1]) + '을 이은 선분의 중점을 지나고 기울기가 ' + fmt(s) + '인 직선의 방정식을 구하시오.',
-    a: lineEq(s, nb), h: '중점 ' + pt(mx, my), p: { mx, my, s, nb } };
+    a: lineEq(s, nb), h: '중점 ' + pt(mx, my), p: { mx, my, s, nb, hx, hy, p1 } };
 });
 
 /* ================= 일차함수 · 중 ================= */
@@ -652,7 +667,7 @@ def('L-H3', 'L', 2, () => {
     if (sols.length < 3 || sols.length > 6) continue;
     const best = sols.reduce((m2, s) => Math.max(m2, s[0] + s[1]), 0);
     return { q: '일차방정식 ' + a + V('x') + ' + ' + b + V('y') + ' = ' + N + '에서 ' + V('x') + ', ' + V('y') + '가 모두 양의 정수인 순서쌍 (' + V('x') + ', ' + V('y') + ')의 개수와, 그중 ' + V('x') + ' + ' + V('y') + '의 최댓값을 구하시오.',
-      a: sols.length + '개, 최댓값 ' + best, h: sols.map((s) => pt(s[0], s[1])).join(', '), p: { a, b, N, n: sols.length, best } };
+      a: sols.length + '개, 최댓값 ' + best, h: sols.map((s) => pt(s[0], s[1])).join(', '), p: { a, b, N, n: sols.length, best, sols } };
   }
 });
 
@@ -1017,7 +1032,7 @@ def('S-H2', 'S', 2, () => {
   const C = [0, CH], A = [-AH, 0], B = [BH, 0], H = [0, 0];
   const Pp = foot(H, C, A), Qp = foot(H, C, B);
   return { q: M('∠§C§ = 90°인 직각삼각형 §ABC§에서 꼭짓점 §C§에서 빗변 §AB§에 내린 수선의 발을 §H§라 하고 §AH§ = ' + AH + ', §BH§ = ' + BH + '이다. §H§에서 §CA§, §CB§에 내린 수선의 발을 각각 §P§, §Q§라 할 때, △§CPQ§의 넓이를 구하시오.'),
-    a: fmt(area), h: '§CH§ = ' + CH + ', §CP§·§CA§ = §CQ§·§CB§ = §CH§² → △§CPQ§ ∽ △§CBA§', p: { AH, BH, CH, area },
+    a: fmt(area), h: '§CH§ = ' + CH + ', §CP§·§CA§ = §CQ§·§CB§ = §CH§² → △§CPQ§ ∽ △§CBA§', p: { AH, BH, CH, area, CA, CB },
     svg: fig({ pts: { C, A, B, H, P: Pp, Q: Qp }, polys: [['A', 'B', 'C']], segs: [['C', 'H', 'd'], ['H', 'P'], ['H', 'Q'], ['P', 'Q', 'b']], rights: [['C', 'A', 'B']], edges: [['A', 'H', AH, -1], ['H', 'B', BH, -1]], off: { H: [0, 14], P: [-12, 0], Q: [12, 0] } }) };
 });
 
@@ -1118,29 +1133,1586 @@ def('S-H12', 'S', 2, () => {
   const i = BANK.findIndex((b) => b.id === id); if (i >= 0) BANK.splice(i, 1);
 });
 
+/* ===== 유형별 오답 보기 (학생이 실제로 하는 실수로 만든다) =====
+   DIST[id](p, out) -> 오답 후보 문자열(HTML) 배열. 정답과 같은 형식을 쓴다. */
+const DIST = {};
+const _f = (x) => fmt(F(x));
+const _pos = (x) => (F(x).val() > 0 ? _f(x) : null);
+const _red = (a, b) => { const g = gcd(a, b) || 1; return a / g + ' : ' + b / g; };
+const _lin = (m, b) => lineEq(F(m), F(b));
+
+/* ---------- 일차함수 ---------- */
+DIST['L-E1'] = (p) => {
+  const { x1, y1, x2, y2 } = p, m = F(p.m), b = F(p.b), inv = F(x2 - x1, y2 - y1);
+  return [_lin(m.neg(), F(y1).add(m.mul(x1))), _lin(m, y1), _lin(m, b.neg()), _lin(inv, F(y1).sub(inv.mul(x1))), _lin(m, F(y1).add(m.mul(x1))), _lin(m, F(y2).sub(m.mul(x1)).add(m))];
+};
+DIST['L-E2'] = (p) => {
+  const m = F(p.m), b = p.b, area = F(p.area);
+  return [_f(area.mul(2)), _f(F(b * b, 2)), _f(F(Math.abs(b), 2).mul(m.abs())), _f(F(b * b).mul(m.abs()).div(2)), _f(area.div(2)), _f(F(Math.abs(b)).add(F(b).div(m).abs()))];
+};
+DIST['L-E3'] = (p) => {
+  const a = F(p.a), b = p.b, pp = p.p, q = p.q;
+  return [_lin(a, F(b).add(a.mul(pp)).add(q)), _lin(a, F(b).sub(a.mul(pp))), _lin(a, F(b - pp + q)), _lin(a, F(b).sub(a.mul(pp)).sub(q)), _lin(a, F(b + q)), _lin(a.neg(), F(p.nb))];
+};
+DIST['L-E4'] = (p) => {
+  const x0 = F(p.b2 - p.b1, p.m1 - p.m2).abs(), y0 = F(p.m1).mul(F(p.b2 - p.b1, p.m1 - p.m2)).add(p.b1).abs(), db = Math.abs(p.b1 - p.b2), area = F(p.area);
+  return [_f(area.mul(2)), _f(y0.mul(db).div(2)), _f(x0.mul(Math.abs(p.b1) + Math.abs(p.b2)).div(2)), _f(area.div(2)), _f(F(db, 2)), _f(x0.mul(y0).div(2)), _f(x0.add(db)), _f(F(db * db, 2)), _f(area.add(x0))];
+};
+DIST['L-E5'] = (p) => {
+  const m = F(p.m), c = p.c, pp = p.p, q = p.q;
+  return [_lin(m, F(q).add(m.mul(pp))), _lin(m, c), _lin(m, q), _lin(m.neg(), F(q).add(m.mul(pp))), _lin(m, F(pp).sub(m.mul(q))), _lin(m, F(p.nb).neg())];
+};
+DIST['L-E6'] = (p) => {
+  const { p: pp, q, r, k, A, Mv } = p, s = (x, y) => V('a') + ' = ' + fmt(x) + ', ' + V('m') + ' = ' + fmt(y);
+  return [s(A, r), s(pp, Mv), s(A, -Mv), s(k + pp, k + r), s(-A, Mv), s(A, k + r), s(k * q, Mv)];
+};
+DIST['L-E7'] = (p) => [pt(-p.p, p.q), pt(p.p, -p.q), pt(p.q, p.p), pt(-p.p, -p.q), pt(p.p, p.q + 1), pt(p.p + 1, p.q), pt(p.p * 2, p.q), pt(0, p.q), pt(p.p, 0), pt(-p.q, p.p), pt(p.q, -p.p), pt(p.p + p.q, p.q)];
+DIST['L-E8'] = (p) => {
+  const { r, c0, t1, t2, H, T } = p, ok = (n) => (Number.isInteger(n) && n > 0 && n !== T ? n + '분 후' : null);
+  return [ok(T + t1), ok(T + t2), ok(T + c0), ok(T - c0), ok(T + r), ok(H / r), ok((H + c0) / r), ok(T * 2), ok(T - (t2 - t1))];
+};
+DIST['L-E9'] = (p) => { const c = p.cnt; return [c - 1, c + 1, c + 2, c - 2, c + p.n, 2 * c].filter((x) => x > 0).map((x) => x + '개'); };
+DIST['L-E10'] = (p) => {
+  const { a, b, al, be } = p, va = al * a, vb = be * b, mx = p.mx;
+  return [Math.min(va, vb), va + vb, al * b + be * a, -mx, Math.abs(Math.min(va, vb)), a + b, Math.abs(va - vb), va * 2, mx + 2, mx - 1].map((x) => String(x).replace('-', '−'));
+};
+DIST['L-E11'] = (p) => {
+  const s = F(p.s), nb = F(p.nb), mx = p.mx, my = p.my;
+  return [_lin(s, F(my).add(s.mul(mx))), _lin(s, my), _lin(s, nb.neg()), _lin(s, F(p.p1[1]).sub(s.mul(p.p1[0]))), _lin(s.neg(), F(my).add(s.mul(mx))), _lin(s, F(mx).sub(s.mul(my)))];
+};
+DIST['L-M1'] = (p) => {
+  const c = F(p.y0, p.x0), m1 = F(p.m1), m2 = F(p.m2);
+  return [_f(c.add(m1)), _f(m1.add(m2)), _f(c.neg().add(m1).add(m2)), _f(c.sub(m1).sub(m2)), _f(c.mul(2).add(m1).add(m2)), _f(m1.neg().add(m2.neg())), _f(c.add(m1.add(m2).div(2))), _f(c)];
+};
+DIST['L-M2'] = (p) => {
+  const { p: a, q } = p, area = F(p.area);
+  return [_f(F(q * q - a * a, 2)), _f(F(a * q)), _f(area.mul(2)), _f(F(q * q + a * a, 2)), _f(F(q * (q + a), 4)), _f(F(q * q, 2))];
+};
+DIST['L-M3'] = (p) => {
+  const m3 = F(p.m3), x0 = p.x0, y0 = p.y0;
+  return [_lin(m3, F(y0).add(m3.mul(x0))), _lin(m3, y0), _lin(m3, F(p.nb).neg()), _lin(m3.neg(), F(y0).add(m3.mul(x0))), _lin(m3, x0), _lin(m3, F(y0).sub(m3.mul(y0)))];
+};
+const _interceptDist = (p) => {
+  const S2 = p.a * p.b, out = [];
+  for (let aa = 1; aa <= S2; aa++) { if (S2 % aa) continue; const bb = S2 / aa; if (aa === p.a && bb === p.b) continue; out.push(_lin(F(-bb, aa), bb)); }
+  return out;
+};
+DIST['L-M4'] = _interceptDist;
+DIST['L-H10'] = _interceptDist;
+DIST['L-M5'] = (p) => { const n = p.n; return [n + 1, n - 1, n + 2, 2 * n, n + 3, n - 2].filter((x) => x > 0 && x !== n).map((x) => x + '개'); };
+DIST['L-M6'] = (p) => {
+  const { v1, v2, t0, T } = p, ok = (x) => (Number.isInteger(x) && x > 0 && x !== T ? x + '분 후' : null);
+  return [ok(T + t0), ok(t0), ok(T - t0), ok((v2 * t0) / (v2 - v1)), ok((v1 * t0) / (v1 + v2)), ok((v1 * t0) / v2), ok(T * 2), ok(T + 5), ok(T + 10), ok(T - 5), ok(2 * t0), ok(T + t0 / 2)];
+};
+DIST['L-M7'] = (p) => {
+  const { a, b, D, T } = p, s = (t, d) => t + '분 후, 집에서 ' + d + ' m', rd = (x) => Math.round(x);
+  return [s(T, b * T), s(T, rd(D / 2)), s(rd(D / a), a * rd(D / a)), s(rd(D / b), b * rd(D / b)), s(T + 1, a * (T + 1)), s(T - 1, a * (T - 1)), s(T, D - a * T + a)];
+};
+DIST['L-M8'] = (p) => {
+  const { p: pp, q, r, py } = p, kk = F(p.kk), s = (x, y, k) => 'P' + pt(x, y) + ', ' + V('k') + ' = ' + fmt(k);
+  return [s(q, py, kk), s(-q, py, kk.neg()), s(-q, r - pp * q, kk), s(-q, r, kk), s(q, -py, kk.neg()), s(-q, pp * q - r, kk), s(-q, py, F(q, r))];
+};
+DIST['L-M9'] = (p) => {
+  const { b, c, d, tt } = p, s = F(p.s);
+  return [_lin(s.neg(), tt), _lin(F(d - tt, b + c), tt), _lin(F(-tt, b).mul(2), tt), _lin(F(d, 2).sub(tt).div(b + c), tt), _lin(F(tt - d, b + c), tt), _lin(s, F(d, 2))];
+};
+DIST['L-M10'] = (p) => {
+  const { b, c, d } = p, s = F(p.s), z = (x, y) => (y === 0 ? null : _lin(F(x, y), 0));
+  return [z(d, 2 * (b + c)), z(d, b), z(2 * d, b + c), z(-d, b + c), z(d, 2 * b + c), z(d, b + 2 * c), z(d, c)].filter((x) => x);
+};
+DIST['L-M11'] = (p) => {
+  const dx = p.B[0] - p.A[0], ay = p.A[1], by = p.B[1], ans = p.ans;
+  return [dx + ay + by, ay + by, Math.abs(dx), Math.round(Math.hypot(dx, by - ay)), Math.abs(by - ay) + Math.abs(dx), ans + 2, ans - 1, ans + 1, ans - 2, ans + 3].filter((x) => x > 0 && x !== ans).map(String);
+};
+DIST['L-H1'] = (p) => {
+  const a = F(p.a), { p: pp, q, h } = p;
+  return [_f(a.mul(2)), _f(a.div(2)), _f(F(h, q)), _f(F(h, pp + q)), _f(F(h, 2 * q)), _f(F((p.p + q) * h, q * q)), _f(F(h, pp))];
+};
+DIST['L-H3'] = (p) => {
+  const n = p.n, best = p.best, mn = p.sols.reduce((m, s) => Math.min(m, s[0] + s[1]), 1e9), s = (a, b) => a + '개, 최댓값 ' + b;
+  return [s(n, mn), s(n + 1, best), s(n - 1, best), s(n + 1, mn), s(n, best + 1), s(n, best - 1), s(n - 1, mn)].filter((x) => !/^0/.test(x));
+};
+DIST['L-H4'] = (p) => {
+  const { a, b, I } = p, g = gcd(a, b);
+  return [I - 1, I + 1, I + g - 1, Math.floor(((a - 1) * (b - 1)) / 2), Math.round((a * b) / 2) - 1, (a * b) / 2 - g, I + 2, I - 2, I + g, I + 3, I - 3].filter((x) => Number.isInteger(x) && x > 0 && x !== I).map((x) => x + '개');
+};
+DIST['L-H5'] = (p) => {
+  const sA = F(p.sA), sB = F(p.sB), k = V('k'), le = ' ≤ ', ge = ' ≥ ';
+  return [fmt(sB) + le + k + le + fmt(sA), k + ' < ' + fmt(sB) + ' 또는 ' + k + ' > ' + fmt(sA), k + le + fmt(sA) + ' 또는 ' + k + ge + fmt(sB), k + le + fmt(sA.neg()) + ' 또는 ' + k + ge + fmt(sB.neg()), k + le + fmt(sB.neg()) + ' 또는 ' + k + ge + fmt(sA.neg()), fmt(sB) + ' < ' + k + ' < ' + fmt(sA)];
+};
+DIST['L-H6'] = (p) => {
+  const { m, n } = p, f = (c) => (c > 0 && c <= 36 ? _f(F(c, 36)) : null);
+  return [f((m - 1) * (7 - n)), f(m * (8 - n)), f(m * (6 - n)), f((m + 1) * (7 - n)), f(m * (7 - n) + 6), f(m * (7 - n) - 6), f((m - 1) * (8 - n))];
+};
+DIST['L-H7'] = (p) => { const r = p.reg, { a, b } = p; return [r - 1, r + 1, r - b, r + b, r - a, r + a, (a + 1) * (b + 1) + a].filter((x) => x > 0 && x !== r).map((x) => x + '개'); };
+DIST['L-H8'] = (p) => {
+  const { a, b, r, s } = p, c1 = F(p.c1), c2 = F(p.c2), c = V('c'), t = (x, y) => c + ' = ' + fmt(x) + ' 또는 ' + fmt(y);
+  return [t(F(r * a, s * b), F(s * a, r * b)), t(c1.neg(), c2.neg()), t(F(r * b, (r + s) * a), F(s * b, (r + s) * a)), t(F(b, a), F(2 * b, a)), t(c1, F(b, a).sub(c2)), t(F(r * b, s * a).mul(2), c2), t(F(s * b, a), F(r * b, a)), t(c1, F(b, a)), t(F(b, r * a), F(b, s * a)), t(F(2 * r * b, s * a), F(2 * s * b, r * a))];
+};
+DIST['L-H9'] = (p) => {
+  const [a1, a2] = p.A, [b1, b2] = p.B, ans = p.ans, dx = b1 - a1, dy = b2 - a2;
+  return [Math.round(Math.hypot(dx, dy)), Math.abs(dx) + Math.abs(dy), Math.round(Math.hypot(b1 - a1, b2 + a2)), Math.round(Math.hypot(b1 + a1, b2 - a2)), ans + 2, ans - 1, Math.abs(dx) + Math.abs(dy) - 1].filter((x) => x > 0 && x !== ans).map(String);
+};
+
+/* ---------- 닮음 ---------- */
+DIST['S-E1'] = (p) => { const { a, b, c } = p; return [_pos(F(b * c, a + b)), _pos(F(a * c, b)), _pos(F((a + b) * c, a)), _pos(F(b * c, a)), _pos(F(c, 2)), _pos(F(a * c, a + b + b))]; };
+DIST['S-E3'] = (p) => { const { m, n, L } = p; return [_pos(F(L * n, m + n)), _pos(F(L * m, n)), _pos(F(L, 2)), _pos(F(L * (m + n), m)), _pos(F(L, m + n)), _pos(F(L * m, m + n + 1))]; };
+DIST['S-E4'] = (p) => { const { a, b } = p; return [_pos(F(a + b, 2)), _pos(F(a * b, a + b)), _pos(F(2 * a * b, b - a)), _pos(F(b - a)), _pos(F(a * b, 2 * (a + b)).mul(3)), _pos(F(a + b, 4))]; };
+DIST['S-E5'] = (p) => {
+  const { m, n, s, v } = p, s2 = (x, y) => '겉넓이 ' + x + ' cm², 부피 ' + y + ' cm³';
+  const A1 = n * n * s, A2 = m * n * s, V1 = n * n * n * v, V2 = m * m * n * v, V3 = m * n * n * v;
+  return [s2(A2, V2), s2(A1, V3), s2(A2, V1), s2(A1, V2), s2(A2, V3), s2(V1 > 0 ? n * n * n * s : A1, V1)];
+};
+DIST['S-E6'] = (p) => {
+  const { N, A } = p, k = (e) => decStr((A * N * N) / e) + ' km²';
+  return [k(1e9), k(1e11), k(1e8), k(1e12), decStr((A * N) / 1e5) + ' km²', decStr((A * N * N) / 1e6) + ' km²'];
+};
+DIST['S-E7'] = (p) => {
+  const { m, n, ah } = p;
+  return [_f(F((m + n) * ah)), _f(F(m * ah, 2)), _f(F(n * ah, 2)), _f(F(m * n)), _f(F((m + n) * (m + n), 2)), _f(F((m + n) * ah, 4))];
+};
+DIST['S-E8'] = (p) => [4, 6, 8, 9, 10, 16, 24].map((k) => String(k * p.s)).filter((x) => x !== String(12 * p.s));
+DIST['S-E9'] = (p) => {
+  const { a, b, c, k } = p;
+  return [a * k, b * k, c * (k + 1), c * (k - 1), c + k, (a + b + c) * k - (a + b) * k - c, c * k + k].filter((x) => x > 0 && x !== c * k).map(String);
+};
+DIST['S-E10'] = (p) => {
+  const { A, B, C, r } = p;
+  return [(A + B + C) / 2, A + B - C, A - r, B - r, C - r, r + 1, A + B - C + 2, (A + B) / 2].filter((x) => x > 0 && x !== r).map((x) => _f(x));
+};
+DIST['S-E12'] = (p) => { const S = p.S; return [S, S / 4, S / 3, (2 * S) / 3, (3 * S) / 4, S / 8].map((x) => _f(F(Math.round(x * 4), 4))).filter((x) => x !== String(S / 2)); };
+DIST['S-E13'] = (p) => {
+  const { m, n, s } = p, u = s / (m * m);
+  return [u * (m + n) * (m + n), u * n * n, u * m * n, u * (m + n) * m, u * (m + n) * (m + n) - u * m, u * ((m + n) * (m + n) + m * m)].map(String).filter((x) => x !== String(p.tr));
+};
+DIST['S-E14'] = (p) => {
+  const { a, b } = p;
+  return [_pos(F(a + b, 2)), _pos(F(a * b, 2 * (a + b))), _pos(F(2 * a * b, a + b)), _pos(F(Math.min(a, b), 2)), _pos(F(a * b, Math.max(a, b))), _pos(F(a * b, a + b + 1))];
+};
+DIST['S-M1'] = (p) => {
+  const { A, B } = p, r = F(p.r);
+  return [_pos(F(A, B).mul(r)), _pos(r.mul(2)), _pos(F(A).sub(r)), _pos(F(A, B).mul(r.add(B))), _pos(F(A).mul(F(B).sub(r.mul(2))).div(B)), _pos(F(A * B, A + B))];
+};
+DIST['S-M2'] = (p) => { const { a, b } = p; return [_pos(F(a * b, a + b)), _pos(F(a * a, a + b)), _pos(F(b * b, a)), _pos(F(b, 2)), _pos(F(b * b, a + b).mul(2)), _pos(F(b - a))]; };
+DIST['S-M3'] = (p) => {
+  const { m, n, s } = p;
+  return [_pos(F(s * (m + 2 * n), n)), _pos(F(2 * s * (m + n), n)), _pos(F(2 * s * (2 * m + n), m)), _pos(F(2 * s * (m + 2 * n), m)), _pos(F(2 * s * (m + n), m + n + n)), _pos(F(2 * s * (m + 2 * n), m + n))];
+};
+DIST['S-M4'] = (p) => {
+  const { m, n } = p;
+  return [_red(n, m + n), _red(m, n), _red(2 * m, m + n), _red(m, m + 2 * n), _red(m + n, n), _red(m, 2 * (m + n)), _red(n, m)];
+};
+DIST['S-M7'] = (p) => {
+  const { p: a, q, S } = p, u = F(S, (a + q) * (a + q)), T = (a + q) * (a + q);
+  return [_pos(u.mul(T - 2 * a * q)), _pos(u.mul(T - 4 * a * q)), _pos(u.mul(a * q)), _pos(u.mul(T - a * q)), _pos(u.mul(T - 6 * a * q)), _pos(u.mul(a * a + q * q + 2 * a * q + a * q))];
+};
+DIST['S-M8'] = (p) => {
+  const { n, k, S } = p, u = F(S, n * n);
+  return [u.mul((k + 1) * (k + 1)), u.mul(2 * k - 1), u.mul(2 * k + 3), u.mul(k * k), u.mul(k + 1), u.mul(2 * k + 2), F(S, n).mul(2 * k + 1)].map(_pos);
+};
+DIST['S-M9'] = (p) => {
+  const { p: a, q, u } = p;
+  return [u * q * q * q, u * (q * q - a * a), u * (q - a) * (q - a) * (q - a), u * (q * q * q + a * a * a), u * a * a * a * (q - a), u * (q * q * q - a * a)].filter((x) => x > 0 && x !== p.more).map((x) => x + 'π');
+};
+DIST['S-M10'] = (p) => { const { a, b } = p; return [a * a + b * b, a * a + a * b + b * b, 2 * (a * a + b * b), (a + b) * (a + b) + a * b, (a + b) * (a + b) - a * b + a, 2 * a * b + a * a].filter((x) => x !== (a + b) * (a + b)).map(String); };
+DIST['S-M12'] = (p) => {
+  const { S, x, y } = p, h = S / 2, s = (u, v) => '△§PCD§ = ' + u + ', △§PDA§ = ' + v;
+  return [s(S - x, S - y), s(h - y, h - x), s(h - x, S - y), s(S - x, h - y), s(h + x, h + y), s(S - x - y, x + y), s(x, y)];
+};
+DIST['S-M13'] = (p) => {
+  const { a, b, m, n } = p;
+  return [_pos(F(m * a + n * b, m + n)), _pos(F(a + b, 2)), _pos(F(m * (b - a), m + n)), _pos(F(n * (b - a), m + n)), _pos(F(a * b, a + b)), _pos(F(n * a + m * b, m + n).add(a))];
+};
+DIST['S-M14'] = (p) => {
+  const { c1, c2, a } = p;
+  return [_pos(F(a * c2, c1 + c2)), _pos(F(a, 2)), _pos(F(a * c1, c2)), _pos(F(a * c2, c1)), _pos(F(c1 * c2, a)), _pos(F(a * (c1 + c2), c1 + 2 * c2)), _pos(F(a * c1, a)), _pos(F(c1 * c2, c1 + c2)), _pos(F(a * c2, a + c1)), _pos(F(a * c1, a + c2))];
+};
+DIST['S-M15'] = (p) => {
+  const { a, b, h } = p;
+  return [_pos(F(h * a * b, 2 * (a + b))), _pos(F(h * a * a, 2 * (a + b))), _pos(F((a + b) * h, 2)), _pos(F(h * b, 2)), _pos(F(h * b * b, a + b)), _pos(F(h * b * b, 2 * a))];
+};
+DIST['S-M16'] = (p) => {
+  const { bc, S } = p, s = (x, y) => '§MN§ = ' + _f(x) + ', △§AMN§ = ' + _f(y);
+  return [s(bc, S / 4), s(F(bc, 2), S / 2), s(F(bc, 2), F(S, 8)), s(F(bc, 4), S / 4), s(bc, S / 2), s(F(bc, 2), F(S, 3)), s(F(bc, 3), F(S, 4))];
+};
+DIST['S-H1'] = (p) => {
+  const { h, e, d } = p;
+  return [_pos(F(d * d, 2 * e)), _pos(F(d * d, 2 * h)), _pos(F(d * d * d, e * h)), _pos(F(d * d * d, 2 * h * h)), _pos(F(d, 2)), _pos(F(d * d * d, 2 * e * e))];
+};
+DIST['S-H2'] = (p) => {
+  const { CH, CA, CB } = p, area = F(p.area), cp = F(CH * CH, CA), cq = F(CH * CH, CB);
+  return [_pos(area.mul(2)), _pos(cp.mul(CH).div(2)), _pos(F(CA * CB, 2)), _pos(F(CH * CH, 2)), _pos(area.mul(4)), _pos(cp.mul(cq)), _pos(area.div(2))];
+};
+DIST['S-H4'] = (p) => {
+  const { L, n } = p, side = (i) => L / Math.pow(2, i + 1), sq = (i) => side(i) * side(i);
+  let sum = 0, sides = 0; for (let i = 0; i < n; i++) { sum += sq(i); sides += side(i); }
+  return [sum - sq(n - 1), (L * L) / 2, sides, 2 * sum, sq(0) * n, sum + sq(n), sum + 1].filter((x) => x > 0 && x !== p.sum).map((x) => _f(F(Math.round(x * 4), 4)));
+};
+DIST['S-H5'] = (p) => { const S = p.S; return [S / 3, S / 2, S / 4, S / 12, S / 8, S / 5].map((x) => _f(F(Math.round(x * 4), 4))); };
+DIST['S-H6'] = (p) => {
+  const { p: a, q, u } = p;
+  return [(q * q * q - a * a * a) * u, q * q * u, a * a * q * u, a * q * q * u, (q * q * q + a * a * a) * u, q * q * q * u * 2].filter((x) => x > 0 && x !== p.tot).map((x) => x + '분');
+};
+DIST['S-H7'] = (p) => {
+  const { s, d } = p, CE = F(d * (s - d), s);
+  return [_pos(CE), _pos(F(s - d)), _pos(F(d)), _pos(F(s).sub(CE.mul(2))), _pos(F(d * d, s)), _pos(F(s * (s - d), s + d))];
+};
+DIST['S-H9'] = (p) => { const { a, b } = p; return [_pos(F(b - a, 2)), _pos(F(2 * a * b, a + b)), _pos(F(a + b, 4)), _pos(F(2 * a + b, 2)), _pos(F(b, 2)), _pos(F(a * b, a + b))]; };
+DIST['S-H11'] = (p) => {
+  const { N, s, v } = p, A0 = (s * N * N) / 1e4, V0 = (v * N * N * N) / 1e6, t = (x, y) => '겉넓이 ' + decStr(x) + ' m², 부피 ' + decStr(y) + ' m³';
+  return [t(A0, (v * N * N) / 1e6), t((s * N) / 1e2, V0), t((s * N * N) / 1e2, (v * N * N * N) / 1e3), t(A0, (v * N * N * N) / 1e9), t((s * N * N) / 1e6, V0), t((s * N) / 1e2, (v * N) / 1e2), t((s * N * N) / 1e6, (v * N * N * N) / 1e3), t(A0 * 100, V0), t(A0 / 100, V0 * 10), t((s * N * N) / 1e3, (v * N * N * N) / 1e5)];
+};
+DIST['S-H12'] = (p) => {
+  const { u, v, T } = p, D = (u + v) * (u + v), c = (x) => _pos(F(T * x, D));
+  return [c(u * u), c(v * v), c(2 * u * v), _pos(F(T * u * v, u + v)), _pos(F(T * u * v, u * u + v * v)), c(u * v + u * u)];
+};
+
+/* ===== 중2 확장: 유리수와 순환소수(N) · 식의 계산(E) · 일차부등식(I) · 연립방정식(Q) ===== */
+
+/* ---------- 공통 도구 ---------- */
+const sup = (s) => '<sup>' + s + '</sup>';
+const pw = (b, e) => b + sup(e);                 // 거듭제곱 표기
+const flipOp = { '<': '>', '>': '<', '≤': '≥', '≥': '≤' };
+
+/* 분수 n/d 의 소수 전개 : {ip, pre, rep} */
+function decExp(n, d) {
+  const g = gcd(n, d); n /= g; d /= g;
+  const ip = Math.floor(n / d); let r = n % d; const seen = {}; let digs = '', i = 0;
+  while (r !== 0 && seen[r] === undefined) { seen[r] = i; r *= 10; digs += Math.floor(r / d); r %= d; i++; }
+  if (r === 0) return { ip, pre: digs, rep: '' };
+  const s = seen[r]; return { ip, pre: digs.slice(0, s), rep: digs.slice(s) };
+}
+function dotH(digs) {
+  if (!digs) return '';
+  const a = digs.split(''), dd = (c) => '<span class="dd">' + c + '</span>';
+  if (a.length === 1) return dd(a[0]);
+  a[0] = dd(a[0]); a[a.length - 1] = dd(a[a.length - 1]); return a.join('');
+}
+const recStr = (ip, pre, rep) => ip + '.' + pre + dotH(rep);
+const digitAt = (n, d, k) => Number((BigInt(n) * (10n ** BigInt(k)) / BigInt(d)) % 10n);
+const isFinite2 = (n, d) => { const g = gcd(n, d); d /= g; while (d % 2 === 0) d /= 2; while (d % 5 === 0) d /= 5; return d === 1; };
+const facStr = (e2, e3, e5, e7, e11) => {
+  const parts = [];
+  [[2, e2], [3, e3], [5, e5], [7, e7], [11, e11 || 0]].forEach(([b, e]) => { if (e > 0) parts.push(e > 1 ? pw(b, e) : String(b)); });
+  return parts.join(' × ');
+};
+
+/* 다항식 : 키 "a,b" = x^a y^b 의 계수(분수) */
+function monoBody(ac, a, b, v1, v2) {
+  let vs = '';
+  if (a) vs += V(v1) + (a > 1 ? sup(a) : '');
+  if (b) vs += V(v2) + (b > 1 ? sup(b) : '');
+  if (!vs) return fmtAbs(ac);
+  return (ac.eq(1) ? '' : fmtAbs(ac)) + vs;
+}
+const PLX = {
+  mk(list) { const m = {}; list.forEach(([c, a, b]) => { const k = a + ',' + (b || 0); m[k] = (m[k] || F(0)).add(c); }); return m; },
+  add(A, B, s) { const m = {}; [A, B].forEach((P, i) => Object.keys(P).forEach((k) => { m[k] = (m[k] || F(0)).add(i && s === -1 ? P[k].neg() : P[k]); })); return m; },
+  scale(A, c) { const m = {}; Object.keys(A).forEach((k) => { m[k] = A[k].mul(c); }); return m; },
+  ev(A, x, y) { let s = 0; Object.keys(A).forEach((k) => { const [a, b] = k.split(',').map(Number); s += A[k].val() * Math.pow(x, a) * Math.pow(y || 0, b); }); return s; },
+  str(A, v1, v2) {
+    v1 = v1 || 'x'; v2 = v2 || 'y';
+    const keys = Object.keys(A).filter((k) => !A[k].isZero()).sort((p, q) => { const [a1, b1] = p.split(',').map(Number), [a2, b2] = q.split(',').map(Number); return (a2 + b2) - (a1 + b1) || a2 - a1; });
+    if (!keys.length) return '0';
+    return keys.map((k, i) => { const c = A[k], [a, b] = k.split(',').map(Number); return (i === 0 ? (c.n < 0 ? '−' : '') : (c.n < 0 ? ' − ' : ' + ')) + monoBody(c.abs(), a, b, v1, v2); }).join('');
+  }
+};
+const polyIn = (list, v) => PLX.str(PLX.mk(list), v);     // 한 문자 다항식 [[계수, 차수], ...]
+/* 괄호 안 다항식 표기 (입력용) : coef 배열 [c2,c1,c0] 등 */
+function polyTxt(coefs, v) { const L = coefs.length; return PLX.str(PLX.mk(coefs.map((c, i) => [c, L - 1 - i, 0])), v); }
+const bracket = (s) => '(' + s + ')';
+
+/* ================= 유리수와 순환소수 · 하 ================= */
+def('N-E1', 'N', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const e2 = ri(0, 2), e3 = ri(0, 2), e5 = ri(0, 2), e7 = ri(0, 1);
+    if (e3 + e7 === 0 || e2 + e5 === 0) continue;
+    const r = Math.pow(3, e3) * Math.pow(7, e7), D = Math.pow(2, e2) * Math.pow(3, e3) * Math.pow(5, e5) * Math.pow(7, e7);
+    return { q: '분수 ' + fracHtml('<var>x</var>', facStr(e2, e3, e5, e7)) + '가 유한소수가 되도록 하는 가장 작은 자연수 ' + V('x') + '의 값을 구하시오.',
+      a: String(r), h: '분모의 소인수 중 2, 5가 아닌 소인수를 약분해 없앤다', p: { D, r } };
+  }
+});
+def('N-E2', 'N', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const len = pick([1, 1, 2, 2]), ip = ri(0, 3);
+    let block = len === 1 ? String(ri(1, 8)) : String(ri(1, 98)).padStart(2, '0');
+    if (len === 2 && (+block % 11 === 0 || +block === 99)) continue;
+    const den = len === 1 ? 9 : 99, val = F(ip).add(F(+block, den));
+    return { q: '순환소수 ' + recStr(ip, '', block) + '을 기약분수로 나타내시오.',
+      a: fmt(val), h: V('x') + ' = ' + recStr(ip, '', block) + '이라 하고 ' + (len === 1 ? '10' : '100') + V('x') + ' − ' + V('x') + '를 계산한다', p: { ip, block, val } };
+  }
+});
+def('N-E3', 'N', 0, () => {
+  const d = pick([7, 11, 13, 27, 37, 41, 101]);
+  let n; do { n = ri(1, d - 1); } while (gcd(n, d) > 1);
+  const k = ri(20, 100), dig = digitAt(n, d, k), e = decExp(n, d);
+  return { q: '분수 ' + fracHtml(n, d) + '을 소수로 나타낼 때, 소수점 아래 ' + k + '번째 자리의 숫자를 구하시오.',
+    a: String(dig), h: '순환마디 ' + e.rep + ' (' + e.rep.length + '개)가 반복되므로 ' + k + ' ÷ ' + e.rep.length + '의 나머지를 이용한다', p: { n, d, k, dig } };
+});
+def('N-E4', 'N', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const a = pick([3, 6, 7, 9, 12, 14, 21]), lo = ri(10, 40), hi = lo + ri(15, 30);
+    let c = 0; for (let n = lo; n <= hi; n++) if (isFinite2(a, n)) c++;
+    if (c < 2 || c > 9) continue;
+    return { q: '분수 ' + fracHtml(a, V('n')) + '이 유한소수가 되도록 하는 ' + lo + ' 이상 ' + hi + ' 이하의 자연수 ' + V('n') + '의 개수를 구하시오.',
+      a: c + '개', h: '기약분수로 고쳤을 때 분모의 소인수가 2나 5뿐이어야 한다', p: { a, lo, hi, c } };
+  }
+});
+
+/* ================= 유리수와 순환소수 · 중 ================= */
+def('N-M1', 'N', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const pre = ri(1, 9), bc = ri(10, 98); if (bc % 11 === 0) continue;
+    const rep = String(bc), val = F(pre * 100 + bc - pre, 990);
+    if (decExp(val.n, val.d).rep !== rep) continue;
+    return { q: '순환소수 ' + recStr(0, String(pre), rep) + '을 기약분수로 나타내시오.',
+      a: fmt(val), h: '1000' + V('x') + ' − 10' + V('x') + '를 계산한다 (순환하지 않는 부분 ' + pre + ')', p: { pre, rep, val } };
+  }
+});
+def('N-M2', 'N', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const a = ri(1, 8), bc = ri(10, 98); if (bc % 11 === 0) continue;
+    const val = F(a, 9).add(F(bc, 99));
+    return { q: recStr(0, '', String(a)) + ' + ' + recStr(0, '', String(bc)) + '의 값을 기약분수로 나타내시오.',
+      a: fmt(val), h: recStr(0, '', String(a)) + ' = ' + fmt(F(a, 9)) + ', ' + recStr(0, '', String(bc)) + ' = ' + fmt(F(bc, 99)), p: { a, bc, val } };
+  }
+});
+def('N-M3', 'N', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const d = pick([7, 13, 27, 37, 41, 21, 33]); let n; do { n = ri(1, d - 1); } while (gcd(n, d) > 1);
+    const k = ri(25, 70), e = decExp(n, d); if (e.pre.length > 0 || e.rep.length < 2) continue;
+    let s = 0; for (let i = 1; i <= k; i++) s += digitAt(n, d, i);
+    return { q: '분수 ' + fracHtml(n, d) + '을 소수로 나타낼 때, 소수점 아래 첫째 자리부터 ' + k + '번째 자리까지의 숫자의 합을 구하시오.',
+      a: String(s), h: '순환마디 ' + e.rep + ' (합 ' + e.rep.split('').reduce((x, y) => x + +y, 0) + ', ' + e.rep.length + '개)가 몇 번 반복되는지 센다', p: { n, d, k, s } };
+  }
+});
+def('N-M4', 'N', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const e2 = ri(0, 2), e3 = ri(1, 2), e5 = ri(0, 2), e7 = ri(0, 1), a = pick([2, 3, 4, 5, 6, 9, 10, 14, 15, 18, 21]);
+    const D = Math.pow(2, e2) * Math.pow(3, e3) * Math.pow(5, e5) * Math.pow(7, e7);
+    if (gcd(a, D) === 1 && t < 200) continue;
+    let x = 1; while (!isFinite2(a * x, D)) x++;
+    if (x < 3 || x > 63) continue;
+    return { q: '분수 ' + fracHtml(a, facStr(e2, e3, e5, e7)) + '에 자연수 ' + V('x') + '를 곱하여 유한소수로 만들려고 한다. ' + V('x') + '의 값 중 가장 작은 수를 구하시오.',
+      a: String(x), h: '약분한 뒤 분모에 남는 2, 5 이외의 소인수가 모두 ' + V('x') + '에 들어 있어야 한다', p: { a, D, x } };
+  }
+});
+
+/* ================= 유리수와 순환소수 · 상 ================= */
+def('N-H1', 'N', 2, () => {
+  for (let t = 0; t < 300; t++) {
+    const mk = () => { const e2 = ri(0, 2), e5 = ri(0, 2), k = pick([1, 3, 3, 7, 9, 11]); return { e2, e5, k, txt: [e2 ? (e2 > 1 ? pw(2, e2) : '2') : '', k > 1 ? (k === 9 ? pw(3, 2) : String(k)) : '', e5 ? (e5 > 1 ? pw(5, e5) : '5') : ''].filter(Boolean).join(' × ') || '1' }; };
+    const A = mk(), B = mk(); if (A.k === 1 || B.k === 1 || A.k === B.k) continue;
+    const m = (A.k * B.k) / gcd(A.k, B.k); if (m > 60) continue;
+    let c = 0; for (let n = 10; n <= 99; n++) if (n % m === 0) c++;
+    return { q: '두 분수 ' + fracHtml(V('n'), A.txt) + '과 ' + fracHtml(V('n'), B.txt) + '이 모두 유한소수가 되도록 하는 두 자리 자연수 ' + V('n') + '의 개수를 구하시오.',
+      a: c + '개', h: V('n') + '은 ' + A.k + '과 ' + B.k + '의 공배수, 즉 ' + m + '의 배수이어야 한다', p: { ka: A.k, kb: B.k, m, c } };
+  }
+});
+def('N-H2', 'N', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const a = ri(1, 8), bc = ri(10, 98); if (bc % 11 === 0) continue;
+    const ans = F(bc, 99).div(F(a, 9));
+    if (ans.d > 40) continue;
+    return { q: recStr(0, '', String(a)) + ' × □ = ' + recStr(0, '', String(bc)) + '일 때, □ 안에 알맞은 수를 기약분수로 나타내시오.',
+      a: fmt(ans), h: recStr(0, '', String(a)) + ' = ' + fmt(F(a, 9)) + ', ' + recStr(0, '', String(bc)) + ' = ' + fmt(F(bc, 99)), p: { a, bc, ans } };
+  }
+});
+def('N-H3', 'N', 2, () => {
+  for (let t = 0; t < 300; t++) {
+    const abc = ri(12, 998); if (abc % 111 === 0 || abc % 100 === 0) continue;
+    const val = F(abc, 999), e = decExp(val.n, val.d); if (e.rep.length !== 3 || e.pre.length) continue;
+    return { q: '순환소수 ' + recStr(0, '', String(abc).padStart(3, '0')) + '을 기약분수 ' + fracHtml(V('b'), V('a')) + '로 나타낼 때, ' + V('a') + ' + ' + V('b') + '의 값을 구하시오. (단, ' + V('a') + ', ' + V('b') + '는 서로소인 자연수)',
+      a: String(val.n + val.d), h: '1000' + V('x') + ' − ' + V('x') + '로 분수로 고친 뒤 기약분수로 약분한다', p: { abc, n: val.n, d: val.d } };
+  }
+});
+def('N-H4', 'N', 2, () => {
+  for (let t = 0; t < 300; t++) {
+    const d = pick([7, 13, 27, 37, 41, 21, 101]); let n; do { n = ri(1, d - 1); } while (gcd(n, d) > 1);
+    const k = ri(80, 200), e = decExp(n, d); if (e.rep.length < 3) continue;
+    let s = 0; for (let i = 1; i <= k; i++) s += digitAt(n, d, i);
+    return { q: '분수 ' + fracHtml(n, d) + '을 소수로 나타낼 때, 소수점 아래 첫째 자리부터 ' + k + '번째 자리까지의 숫자의 합을 구하시오.',
+      a: String(s), h: '순환마디 ' + e.rep + ' (' + e.rep.length + '개, 합 ' + e.rep.split('').reduce((x, y) => x + +y, 0) + ')가 ' + Math.floor(k / e.rep.length) + '번 반복되고 ' + (k % e.rep.length) + '개가 남는다', p: { n, d, k, s } };
+  }
+});
+
+/* ================= 식의 계산 · 하 ================= */
+def('E-E1', 'E', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const a = ri(2, 4), b = ri(2, 4), c = ri(1, 5), d = ri(1, 6), res = a * b + c - d; if (res < 1) continue;
+    return { q: bracket(V('x') + sup(a)) + sup(b) + ' × ' + V('x') + (c > 1 ? sup(c) : '') + ' ÷ ' + V('x') + (d > 1 ? sup(d) : '') + ' = ' + V('x') + sup('□') + '일 때, □ 안에 알맞은 수를 구하시오.',
+      a: String(res), h: '지수법칙: (' + V('x') + sup('m') + ')' + sup('n') + ' = ' + V('x') + sup('mn') + ', 곱하면 지수를 더하고 나누면 뺀다', p: { a, b, c, d, res } };
+  }
+});
+def('E-E2', 'E', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const p = nz(-4, 4), a = ri(1, 3), b = ri(1, 3), q = nz(-3, 3), c = ri(1, 3), d = ri(1, 2);
+    const A = PLX.mk([[p, a, b]]), Bq = PLX.mk([[q * q, 2 * c, 2 * d]]);
+    const coef = p * q * q, ea = a + 2 * c, eb = b + 2 * d, ans = PLX.mk([[coef, ea, eb]]);
+    const mon = (cc, x, y) => PLX.str(PLX.mk([[cc, x, y]]));
+    return { q: bracket(mon(p, a, b)) + bracket(mon(q, c, d)) + sup(2) + '을 계산하시오.',
+      a: PLX.str(ans), h: bracket(mon(q, c, d)) + sup(2) + ' = ' + mon(q * q, 2 * c, 2 * d), p: { coef, ea, eb, pp: p, qq: q, a, b, c, d, ev: (x, y) => (p * Math.pow(x, a) * Math.pow(y, b)) * Math.pow(q * Math.pow(x, c) * Math.pow(y, d), 2), ans } };
+  }
+});
+def('E-E3', 'E', 0, () => {
+  const A = [nz(-4, 5), nz(-5, 5), ri(-6, 6)], B = [nz(-4, 5), nz(-5, 5), ri(-6, 6)], s = pick([1, -1]);
+  const R = A.map((x, i) => x + s * B[i]);
+  const ans = PLX.mk(R.map((c, i) => [c, 2 - i, 0]));
+  return { q: bracket(polyTxt(A, 'x')) + (s > 0 ? ' + ' : ' − ') + bracket(polyTxt(B, 'x')) + '을 계산하시오.',
+    a: PLX.str(ans), h: '동류항끼리 모아서 계산한다' + (s < 0 ? ' (괄호 앞이 −이면 부호를 바꾸어 푼다)' : ''), p: { A, B, s, ans, ev: (x) => (A[0] * x * x + A[1] * x + A[2]) + s * (B[0] * x * x + B[1] * x + B[2]) } };
+});
+def('E-E4', 'E', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const p = ri(2, 4), a = nz(-3, 3), q = ri(2, 3), b = nz(-3, 3), c = ri(2, 4), d = nz(-3, 3), e = ri(1, 3), f = nz(-3, 3);
+    const x0 = nz(-3, 3), y0 = nz(-3, 3);
+    const ev = (x, y) => p * (x + a * y) - q * (b * x + c * y) + e * (d * x - f * y);
+    const val = ev(x0, y0);
+    const E = (u, w) => (u === 1 ? '' : u) + V('x') + (w < 0 ? ' − ' : ' + ') + (Math.abs(w) === 1 ? '' : Math.abs(w)) + V('y');
+    const t1 = bracket(V('x') + (a < 0 ? ' − ' : ' + ') + (Math.abs(a) === 1 ? '' : Math.abs(a)) + V('y'));
+    const t2 = bracket((b === 1 ? '' : b < 0 ? '−' + (Math.abs(b) === 1 ? '' : Math.abs(b)) : b) + V('x') + (c < 0 ? ' − ' : ' + ') + (Math.abs(c) === 1 ? '' : Math.abs(c)) + V('y'));
+    const t3 = bracket((d < 0 ? '−' : '') + (Math.abs(d) === 1 ? '' : Math.abs(d)) + V('x') + (-f < 0 ? ' − ' : ' + ') + (Math.abs(f) === 1 ? '' : Math.abs(f)) + V('y'));
+    if (Math.abs(val) > 60) continue;
+    return { q: p + t1 + ' − ' + q + t2 + ' + ' + (e === 1 ? '' : e) + t3 + '의 값을 구하시오. (단, ' + V('x') + ' = ' + num(x0) + ', ' + V('y') + ' = ' + num(y0) + ')',
+      a: num(val), h: '먼저 식을 간단히 한 뒤 값을 대입한다', p: { x0, y0, val, ev, P: p, a, Q: q, b, c, d, e, f } };
+  }
+});
+def('E-E5', 'E', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const a = nz(-5, 5), b = pick([2, 3, 4, -2, -3, 5]), c = nz(-12, 12);
+    const m = F(-a, b), k = F(c, b), which = pick(['y', 'x']);
+    const eq = (a < 0 ? '−' : '') + (Math.abs(a) === 1 ? '' : Math.abs(a)) + V('x') + (b < 0 ? ' − ' : ' + ') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + V('y') + ' = ' + num(c);
+    if (which === 'y') return { q: '등식 ' + eq + '을 ' + V('y') + '에 대하여 풀어 ' + V('y') + ' = (  )꼴로 나타내시오.', a: lineEq(m, k), h: V('y') + '가 있는 항만 좌변에 남기고 양변을 ' + b + '로 나눈다', p: { a, b, c, which, m, k } };
+    const m2 = F(-b, a), k2 = F(c, a);
+    return { q: '등식 ' + eq + '을 ' + V('x') + '에 대하여 풀어 ' + V('x') + ' = (  )꼴로 나타내시오.', a: V('x') + ' = ' + ex(m2, k2, 'y'), h: V('x') + '가 있는 항만 좌변에 남기고 양변을 ' + a + '로 나눈다', p: { a, b, c, which, m: m2, k: k2 } };
+  }
+});
+
+/* ================= 식의 계산 · 중 ================= */
+def('E-M1', 'E', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const p = nz(-8, 8) * pick([1, 2, 3]), a = ri(2, 4), b = ri(1, 3), q = nz(-4, 4), c = ri(1, 2), d = ri(1, 2), r = nz(-3, 3), e = ri(1, 2), f = ri(1, 3);
+    const coef = F(p * r, q), ea = a - c + e, eb = b - d + f; if (ea < 0 || eb < 0) continue;
+    const mon = (cc, x, y) => PLX.str(PLX.mk([[cc, x, y]]));
+    return { q: bracket(mon(p, a, b)) + ' ÷ ' + bracket(mon(q, c, d)) + ' × ' + bracket(mon(r, e, f)) + '을 계산하시오.',
+      a: PLX.str(PLX.mk([[coef, ea, eb]])), h: '나눗셈은 역수의 곱셈으로 바꾸어 계수끼리, 문자끼리 계산한다', p: { coef, ea, eb, P: p, a, b, Q: q, c, d, R: r, e, f, ev: (x, y) => ((p * Math.pow(x, a) * Math.pow(y, b)) / (q * Math.pow(x, c) * Math.pow(y, d))) * (r * Math.pow(x, e) * Math.pow(y, f)) } };
+  }
+});
+def('E-M2', 'E', 1, () => {
+  const A = [nz(-3, 3), nz(-4, 4), ri(-5, 5)], B = [nz(-3, 3), nz(-4, 4), ri(-5, 5)], k = pick([2, 3, -2]);
+  const ans = PLX.mk(A.map((c, i) => [c - k * (B[i] - c), 2 - i, 0]));
+  return { q: 'A = ' + polyTxt(A, 'x') + ', B = ' + polyTxt(B, 'x') + '일 때, A − ' + (k < 0 ? '(' + k + ')' : k) + '(B − A)를 계산하시오.',
+    a: PLX.str(ans), h: '분배법칙으로 괄호를 풀고 동류항을 정리한다', p: { A, B, k, ans, ev: (x) => { const a = A[0] * x * x + A[1] * x + A[2], b = B[0] * x * x + B[1] * x + B[2]; return a - k * (b - a); } } };
+});
+def('E-M3', 'E', 1, () => {
+  for (let t = 0; t < 100; t++) {
+    const p = ri(2, 4), a = nz(-4, 4), q = ri(2, 3), b = nz(-3, 3), c = nz(-3, 3), r = nz(-3, 3), s = nz(-3, 3);
+    // p·x(x + a) − q·(x² + b·x + c) + r·x − s·(x − ... ) 형태: p x(x+a) − q(x² + b x + c) + r(s x − 1)
+    const A = [p - q, p * a - q * b + r * s, -q * c - r];
+    const nm = ['x²의 계수', '일차항의 계수', '상수항'], which = pick([[0, 2], [0, 1], [1, 2]]);
+    const sum = A[which[0]] + A[which[1]];
+    return { q: p + V('x') + bracket(V('x') + (a < 0 ? ' − ' : ' + ') + Math.abs(a)) + ' − ' + q + bracket(V('x') + sup(2) + (b < 0 ? ' − ' : ' + ') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + V('x') + (c < 0 ? ' − ' : ' + ') + Math.abs(c)) + ' + ' + (r < 0 ? '(' + num(r) + ')' : r) + bracket((s < 0 ? '−' : '') + (Math.abs(s) === 1 ? '' : Math.abs(s)) + V('x') + ' − 1') + '을 간단히 하였을 때, ' + nm[which[0]] + '와 ' + nm[which[1]] + '의 합을 구하시오.',
+      a: num(sum), h: '전개하여 정리하면 ' + polyTxt(A, 'x'), p: { A, which, sum, ev: (x) => p * x * (x + a) - q * (x * x + b * x + c) + r * (s * x - 1) } };
+  }
+});
+def('E-M4', 'E', 1, () => {
+  const a = ri(4, 14), b = a + ri(2, 7), k = b - a;
+  const dg = (Math.pow(5, k)).toString().length + a;
+  return { q: pw(2, a) + ' × ' + pw(5, b) + '은 몇 자리의 자연수인지 구하시오.',
+    a: dg + '자리', h: pw(2, a) + ' × ' + pw(5, b) + ' = ' + pw(5, k) + ' × (2 × 5)' + sup(a) + ' = ' + Math.pow(5, k) + ' × ' + pw(10, a), p: { a, b, dg } };
+});
+def('E-M5', 'E', 1, () => {
+  for (let t = 0; t < 100; t++) {
+    const m = nz(-3, 3), n = nz(-4, 4), r = nz(-3, 3), s = nz(-4, 4), p = ri(2, 4), q = ri(1, 4);
+    const X = PLX.mk([[m, 1], [n, 0]]), Y = PLX.mk([[r, 1], [s, 0]]);
+    const ans = PLX.add(PLX.scale(X, p), PLX.scale(Y, -q));
+    const lin = (u, v) => PLX.str(PLX.mk([[u, 1], [v, 0]]), 'a');
+    return { q: V('x') + ' = ' + lin(m, n) + ', ' + V('y') + ' = ' + lin(r, s) + '일 때, ' + p + V('x') + ' − ' + (q === 1 ? '' : q) + V('y') + '를 ' + V('a') + '에 대한 식으로 나타내시오.',
+      a: PLX.str(ans, 'a'), h: V('x') + ', ' + V('y') + '에 각각 대입하여 정리한다', p: { m, n, r, s, p, q, ans, ev: (a) => p * (m * a + n) - q * (r * a + s) } };
+  }
+});
+
+/* ================= 식의 계산 · 상 ================= */
+def('E-H1', 'E', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const d = pick([-3, -2, -1, 2, 3, 4]), i = ri(1, 2), j = ri(1, 2);   // 나누는 식 d·x^i·y^j
+    const Q = [[nz(-3, 3), ri(1, 2), ri(0, 2)], [nz(-4, 4), ri(0, 2), ri(1, 2)], [nz(-3, 3), ri(0, 1), ri(0, 1)]];
+    const used = {}; let ok = true; Q.forEach(([c, a, b]) => { const k = a + ',' + b; if (used[k]) ok = false; used[k] = 1; }); if (!ok) continue;
+    const Nm = PLX.mk(Q.map(([c, a, b]) => [c * d, a + i, b + j])), ans = PLX.mk(Q);
+    const dv = PLX.str(PLX.mk([[d, i, j]]));
+    return { q: bracket(PLX.str(Nm)) + ' ÷ ' + bracket(dv) + '을 계산하시오.',
+      a: PLX.str(ans), h: '다항식을 단항식으로 나눌 때는 각 항을 나누어 준다', p: { d, i, j, Nm, ans, ev: (x, y) => PLX.ev(Nm, x, y) / (d * Math.pow(x, i) * Math.pow(y, j)) } };
+  }
+});
+def('E-H2', 'E', 2, () => {
+  const mkp = () => PLX.mk([[nz(-4, 4), 2, 0], [nz(-4, 4), 1, 1], [nz(-4, 4), 0, 2]]);
+  const Bp = PLX.mk([[nz(-3, 3), 2, 0], [nz(-3, 3), 1, 1], [nz(-3, 3), 0, 2]]), W = mkp();
+  const ans = PLX.add(W, PLX.scale(Bp, 2));
+  return { q: '어떤 식 A에 ' + PLX.str(Bp) + '을 더해야 할 것을 잘못하여 빼었더니 ' + PLX.str(W) + '이 되었다. 바르게 계산한 식을 구하시오.',
+    a: PLX.str(ans), h: 'A = (잘못 계산한 식) + (더해야 했던 식)을 먼저 구한다', p: { W, Bp, ans, ev: (x, y) => (PLX.ev(W, x, y) + PLX.ev(Bp, x, y)) + PLX.ev(Bp, x, y) } };
+});
+def('E-H3', 'E', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const c1 = ri(1, 4), c2 = ri(1, 3), c3 = F(ri(1, 3), pick([1, 1, 2])), i = ri(1, 3), j = ri(1, 2), k = ri(1, 2), l = ri(1, 3), m = ri(1, 2), n = ri(0, 2);
+    const vol = PLX.mk([[F(c1 * c2).mul(c3), i + k + m, j + l + n]]);
+    return { q: '밑면의 가로의 길이가 ' + PLX.str(PLX.mk([[c1, i, j]]), 'a', 'b') + ', 세로의 길이가 ' + PLX.str(PLX.mk([[c2, k, l]]), 'a', 'b') + '인 직육면체의 부피가 ' + PLX.str(vol, 'a', 'b') + '일 때, 이 직육면체의 높이를 구하시오.',
+      a: PLX.str(PLX.mk([[c3, m, n]]), 'a', 'b'), h: '(부피) = (가로) × (세로) × (높이)이므로 높이 = 부피 ÷ (가로 × 세로)', p: { c1, c2, c3, i, j, k, l, m, n, ev: (a, b) => (c1 * Math.pow(a, i) * Math.pow(b, j)) * (c2 * Math.pow(a, k) * Math.pow(b, l)) * (c3.val() * Math.pow(a, m) * Math.pow(b, n)) } };
+  }
+});
+def('E-H4', 'E', 2, () => {
+  for (let t = 0; t < 100; t++) {
+    const a = ri(3, 9), c = a + ri(2, 6), e3 = ri(1, 3);
+    const dg = (9 * 0 + Math.pow(3, e3) * Math.pow(5, c - a)).toString().length + a;
+    return { q: pw(2, a) + ' × ' + pw(3, e3) + ' × ' + pw(5, c) + '은 몇 자리의 자연수인지 구하시오.',
+      a: dg + '자리', h: pw(2, a) + ' × ' + pw(5, c) + ' = ' + pw(5, c - a) + ' × ' + pw(10, a) + '을 이용하여 ' + pw(3, e3) + ' × ' + pw(5, c - a) + '의 자릿수를 센다', p: { a, c, e3, dg } };
+  }
+});
+def('E-H5', 'E', 2, () => {
+  const [base, k, m] = pick([[2, 2, 1], [2, 4, 2], [3, 3, 1], [5, 5, 1], [2, 8, 3], [3, 9, 2]]);
+  const N = ri(8, 20), x = N - m;
+  const terms = k <= 5 ? Array(k).fill(pw(base, V('x'))).join(' + ') : k + ' × ' + pw(base, V('x'));
+  return { q: terms + ' = ' + pw(base, N) + '일 때, 자연수 ' + V('x') + '의 값을 구하시오.',
+    a: String(x), h: k + ' = ' + pw(base, m) + '이므로 ' + pw(base, m) + ' × ' + pw(base, V('x')) + ' = ' + pw(base, V('x') + ' + ' + m), p: { base, k, m, N, x } };
+});
+
+/* ===== 일차부등식(I) · 연립방정식(Q) ===== */
+const ineq = (v, op, val) => V(v) + ' ' + op + ' ' + fmt(val);
+function solveLin(a1, b1, a2, b2, op) {   // a1 x + b1  op  a2 x + b2
+  const k = F(a1).sub(a2), rhs = F(b2).sub(b1);
+  return { op: k.n < 0 ? flipOp[op] : op, val: rhs.div(k) };
+}
+const OPS = ['<', '>', '≤', '≥'];
+/* a x + b y + c 꼴 (문자 x, y) */
+function xyTxt(a, b, c) {
+  let s = '';
+  if (a) s += (a < 0 ? '−' : '') + (Math.abs(a) === 1 ? '' : Math.abs(a)) + V('x');
+  if (b) s += (s === '' ? (b < 0 ? '−' : '') : (b < 0 ? ' − ' : ' + ')) + (Math.abs(b) === 1 ? '' : Math.abs(b)) + V('y');
+  if (c) s += (s === '' ? num(c) : (c < 0 ? ' − ' : ' + ') + Math.abs(c));
+  return s || '0';
+}
+const sysH = (r1, r2) => '<span class="sys">' + r1 + '<br>' + r2 + '</span>';
+const xyAns = (x, y) => V('x') + ' = ' + fmt(x) + ', ' + V('y') + ' = ' + fmt(y);
+
+/* ================= 일차부등식 · 하 ================= */
+def('I-E1', 'I', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const a2 = nz(-4, 4), k = nz(-4, 4), a1 = a2 + k, b1 = ri(-8, 8), x0 = ri(-5, 6), op = pick(OPS);
+    const off = Math.abs(k) > 1 && rng() < 0.3 ? 1 : 0, b2 = b1 + k * x0 + off;
+    if (a1 === 0) continue;
+    const s = solveLin(a1, b1, a2, b2, op);
+    return { q: ex(a1, b1) + ' ' + op + ' ' + ex(a2, b2) + '을 푸시오.',
+      a: ineq('x', s.op, s.val), h: '문자가 있는 항은 좌변으로, 상수항은 우변으로 이항한다. 양변을 음수로 나누면 부등호의 방향이 바뀐다', p: { a1, b1, a2, b2, op, o: s.op, val: s.val } };
+  }
+});
+def('I-E2', 'I', 0, () => {
+  for (let t = 0; t < 300; t++) {
+    const a = nz(-5, 5), b = ri(-9, 9), op = a < 0 ? pick(['≥', '>']) : pick(['≤', '<']), B = F(ri(2, 24), pick([1, 1, 2]));
+    const c = F(a).mul(B).add(b); if (c.d !== 1) continue;
+    const s = solveLin(a, b, 0, c.n, op);          // a x + b op c
+    let cnt = 0; for (let x = 1; x <= 400; x++) { const lhs = a * x + b; if ((op === '≤' && lhs <= c.n) || (op === '<' && lhs < c.n) || (op === '≥' && lhs >= c.n) || (op === '>' && lhs > c.n)) cnt++; }
+    if (cnt < 1 || cnt > 9) continue;
+    return { q: '부등식 ' + ex(a, b) + ' ' + op + ' ' + num(c.n) + '을 만족하는 자연수 ' + V('x') + '의 개수를 구하시오.',
+      a: cnt + '개', h: '부등식을 풀면 ' + ineq('x', s.op, s.val), p: { a, b, c: c.n, op, cnt } };
+  }
+});
+def('I-E3', 'I', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const a = ri(-5, -2), b = ri(-8, 8), k = ri(-4, 6), op = pick(['>', '≥']), c = a * k + b;
+    return { q: V('x') + '에 대한 부등식 ' + V('a') + V('x') + (b < 0 ? ' − ' : ' + ') + Math.abs(b) + ' ' + op + ' ' + num(c) + '의 해가 ' + V('x') + ' ' + flipOp[op] + ' ' + num(k) + '일 때, 상수 ' + V('a') + '의 값을 구하시오.',
+      a: num(a), h: V('a') + '가 음수이므로 양변을 ' + V('a') + '로 나누면 부등호의 방향이 바뀐다', p: { a, b, c, k, op } };
+  }
+});
+def('I-E4', 'I', 0, () => {
+  for (let t = 0; t < 300; t++) {
+    const p = pick([2, 3, 4, 5]), q = pick([2, 3, 4, 5, 6]); if (p === q) continue;
+    const a = nz(-4, 4), b = nz(-3, 3), c = nz(-5, 5), op = pick(OPS);
+    const a1 = F(1, p), b1 = F(-a, p), a2 = F(b, q), b2 = F(c, q);
+    if (a1.sub(a2).isZero()) continue;
+    const s = solveLin(a1, b1, a2, b2, op);
+    const lhs = fracHtml(V('x') + (a < 0 ? ' + ' : ' − ') + Math.abs(a), p), rhs = fracHtml((b < 0 ? '−' : '') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + V('x') + (c < 0 ? ' − ' : ' + ') + Math.abs(c), q);
+    if (Math.abs(s.val.val()) > 40 || s.val.d > 30) continue;
+    return { q: lhs + ' ' + op + ' ' + rhs + '을 푸시오.', a: ineq('x', s.op, s.val), h: '양변에 ' + (p * q / gcd(p, q)) + ' (분모의 최소공배수)를 곱하여 분모를 없앤다', p: { p, q, a, b, c, op, o: s.op, val: s.val } };
+  }
+});
+
+/* ================= 일차부등식 · 중 ================= */
+def('I-M1', 'I', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const p = ri(1, 6), q = ri(-4, 6), a = ri(2, 5), r = ri(1, 7), k = p + q; if (k === 0) continue;
+    const s = a * k - r;
+    return { q: '두 부등식 ' + V('x') + ' − ' + p + ' > ' + num(q) + '과 ' + V('a') + V('x') + ' − ' + r + ' > ' + num(s) + '의 해가 같을 때, 상수 ' + V('a') + '의 값을 구하시오.',
+      a: String(a), h: '첫째 식의 해는 ' + V('x') + ' > ' + num(k), p: { p, q, a, r, s, k } };
+  }
+});
+def('I-M2', 'I', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const [nm, un] = pick([['과자', '개'], ['빵', '개'], ['공책', '권'], ['볼펜', '자루'], ['사탕', '개']]);
+    const c = pick([300, 400, 500, 700, 800, 1200, 1500]), d = pick([500, 1000, 1500, 2000, 2500]), N = 1000 * ri(5, 40) + 100 * ri(0, 9), n = Math.floor((N - d) / c);
+    if (n < 3 || n > 25) continue;
+    return { q: '한 ' + un + '에 ' + c + '원인 ' + nm + '을 ' + V('x') + un + ' 사려고 한다. 포장비 ' + d + '원이 따로 든다고 할 때, 총 ' + N + '원 이하로 사려면 ' + nm + '을 최대 몇 ' + un + '까지 살 수 있는지 구하시오.',
+      a: n + un, h: c + V('x') + ' + ' + d + ' ≤ ' + N, p: { c, d, N, n, un } };
+  }
+});
+def('I-M3', 'I', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const k = pick([3, 3, 4, 5]), tri = (k * (k - 1)) / 2, x = ri(3, 30), N = k * x + tri - ri(0, k - 1);
+    if (N <= tri) continue;
+    let m = 1; while (k * m + tri <= N) m++;
+    return { q: '연속하는 ' + k + '개의 자연수의 합이 ' + N + '보다 크다고 한다. 이 ' + k + '개의 자연수 중 가장 작은 수의 최솟값을 구하시오.',
+      a: String(m), h: '가장 작은 수를 ' + V('x') + '라 하면 ' + V('x') + ' + (' + V('x') + ' + 1) + … > ' + N, p: { k, N, m } };
+  }
+});
+def('I-M4', 'I', 1, () => {
+  for (let t = 0; t < 200; t++) {
+    const [a, b] = pick([[3, 6], [6, 12], [4, 12], [5, 20], [2, 3], [4, 6], [3, 4], [2, 6]]), T = ri(2, 10), x = F(a * b * T, a + b);
+    if (x.d !== 1) continue;
+    return { q: '산을 올라갈 때는 시속 ' + a + ' km, 같은 길로 내려올 때는 시속 ' + b + ' km로 걸어서 전체 걸린 시간을 ' + T + '시간 이하로 하려고 한다. 올라갈 수 있는 최대 거리는 몇 km인지 구하시오.',
+      a: x.n + ' km', h: V('x') + '/' + a + ' + ' + V('x') + '/' + b + ' ≤ ' + T, p: { a, b, T, x: x.n } };
+  }
+});
+
+/* ================= 일차부등식 · 상 ================= */
+def('I-H1', 'I', 2, () => {
+  const k = ri(2, 4), b = ri(1, 9), m = ri(2, 6), lo = k * m - b, hi = k * (m + 1) - b;
+  return { q: '부등식 ' + k + V('x') + ' − ' + V('a') + ' < ' + b + '을 만족하는 자연수 ' + V('x') + '가 ' + m + '개일 때, 상수 ' + V('a') + '의 값의 범위를 구하시오.',
+    a: num(lo) + ' < ' + V('a') + ' ≤ ' + num(hi), h: V('x') + ' < (' + V('a') + ' + ' + b + ')/' + k + '이고 자연수 해가 1, 2, …, ' + m + '이므로 ' + m + ' < (' + V('a') + ' + ' + b + ')/' + k + ' ≤ ' + (m + 1), p: { k, b, m, lo, hi } };
+});
+def('I-H2', 'I', 2, () => {
+  const p = nz(-4, 4), q = ri(-6, 6), op = pick(['≤', '<', '≥', '>']);
+  const cond = { '≤': ' > ', '<': ' ≥ ', '≥': ' < ', '>': ' ≤ ' }[op];
+  const rhs = (p < 0 ? '−' : '') + (Math.abs(p) === 1 ? '' : Math.abs(p)) + V('x') + (q < 0 ? ' − ' : ' + ') + Math.abs(q);
+  return { q: V('x') + '에 대한 부등식 ' + V('a') + V('x') + ' + ' + V('b') + ' ' + op + ' ' + rhs + '의 해가 없을 때, 상수 ' + V('a') + ', ' + V('b') + '가 만족하는 조건을 구하시오.',
+    a: V('a') + ' = ' + num(p) + ', ' + V('b') + cond + num(q), h: '(' + V('a') + ' − (' + num(p) + '))' + V('x') + ' ' + op + ' ' + num(q) + ' − ' + V('b') + '에서 ' + V('x') + '의 계수가 0이고 우변이 조건에 어긋나야 한다', p: { p, q, op } };
+});
+def('I-H3', 'I', 2, () => {
+  const C = pick([8000, 10000, 12000, 15000, 20000, 25000]);
+  const opts = []; for (const pp of [20, 25, 30, 40, 50, 60, 80]) for (const r of [5, 8, 10, 12, 15, 20, 25]) { if (pp > r && (100 * (pp - r)) % (100 + pp) === 0) opts.push([pp, r, (100 * (pp - r)) / (100 + pp)]); }
+  const [pp, r, x] = pick(opts);
+  return { q: '원가가 ' + C + '원인 물건에 ' + pp + '%의 이익을 붙여 정가를 정하였다. 이 물건을 정가에서 ' + V('x') + '% 할인하여 팔아도 원가의 ' + r + '% 이상의 이익을 얻으려고 할 때, ' + V('x') + '의 최댓값을 구하시오.',
+    a: x + '%', h: '정가 = ' + (C * (100 + pp) / 100) + '원, ' + (C * (100 + pp) / 100) + ' × (1 − ' + V('x') + '/100) ≥ ' + (C * (100 + r) / 100), p: { C, pp, r, x } };
+});
+def('I-H4', 'I', 2, () => {
+  for (let t = 0; t < 400; t++) {
+    const p = pick([2, 3, 4]), q = pick([2, 3, 5, 6]); if (p === q) continue;
+    const a1 = nz(-3, 5), b1 = nz(-5, 5), a2 = nz(-3, 5), b2 = nz(-5, 8), op = pick(['<', '≤']);
+    const A1 = F(a1, p), B1 = F(b1, p), A2 = F(a2, q), B2 = F(b2, q);
+    const k = A1.sub(A2); if (k.n <= 0) continue;
+    let sum = 0, cnt = 0; for (let x = 1; x <= 60; x++) { const L = A1.mul(x).add(B1), R = A2.mul(x).add(B2), ok = op === '<' ? L.cmp(R) < 0 : L.cmp(R) <= 0; if (ok) { sum += x; cnt++; } }
+    if (cnt < 2 || cnt > 7) continue;
+    const e = (a, b) => (a < 0 ? '−' : '') + (Math.abs(a) === 1 ? '' : Math.abs(a)) + V('x') + (b < 0 ? ' − ' : ' + ') + Math.abs(b);
+    return { q: fracHtml(e(a1, b1), p) + ' ' + op + ' ' + fracHtml(e(a2, b2), q) + '을 만족하는 모든 자연수 ' + V('x') + '의 합을 구하시오.',
+      a: String(sum), h: '양변에 ' + (p * q / gcd(p, q)) + '를 곱하여 정리한 뒤 해를 구한다', p: { p, q, a1, b1, a2, b2, op, sum, cnt } };
+  }
+});
+
+/* ================= 연립방정식 · 하 ================= */
+def('Q-E1', 'Q', 0, () => {
+  for (let t = 0; t < 300; t++) {
+    const x0 = ri(-5, 5), y0 = ri(-5, 5), a = nz(-4, 4), b = nz(-4, 4), d = nz(-4, 4), e = nz(-4, 4);
+    if ((x0 === 0 && y0 === 0) || a * e - b * d === 0) continue;
+    const c = a * x0 + b * y0, f = d * x0 + e * y0;
+    return { q: '연립방정식 ' + sysH(lin2(a, b, c), lin2(d, e, f)) + '을 푸시오.', a: xyAns(x0, y0), h: '가감법 또는 대입법으로 한 문자를 없앤다', p: { a, b, c, d, e, f, x0, y0 } };
+  }
+});
+def('Q-E2', 'Q', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const a = nz(-4, 4), b = nz(-4, 4), x0 = nz(-4, 4), y0 = nz(-4, 4), c1 = a * x0 + y0, c2 = 2 * x0 - b * y0;
+    return { q: '연립방정식 ' + sysH(V('a') + V('x') + ' + ' + V('y') + ' = ' + num(c1), '2' + V('x') + ' − ' + V('b') + V('y') + ' = ' + num(c2)) + '의 해가 ' + V('x') + ' = ' + num(x0) + ', ' + V('y') + ' = ' + num(y0) + '일 때, 상수 ' + V('a') + ', ' + V('b') + '의 값을 구하시오.',
+      a: V('a') + ' = ' + num(a) + ', ' + V('b') + ' = ' + num(b), h: '해를 두 식에 각각 대입한다', p: { a, b, x0, y0, c1, c2 } };
+  }
+});
+def('Q-E3', 'Q', 0, () => {
+  const s = ri(3, 20), B = s + ri(1, 20), ask = pick(['큰', '작은']), S = B + s, D = B - s;
+  return { q: '두 수의 합이 ' + S + '이고 차가 ' + D + '일 때, 두 수 중 ' + ask + ' 수를 구하시오.', a: String(ask === '큰' ? B : s), h: '큰 수를 ' + V('x') + ', 작은 수를 ' + V('y') + '라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + S + ', ' + V('x') + ' − ' + V('y') + ' = ' + D, p: { S, D, B, s, ask } };
+});
+def('Q-E4', 'Q', 0, () => {
+  for (let t = 0; t < 100; t++) {
+    const [n1, n2] = pick([['닭', '토끼'], ['오리', '돼지'], ['닭', '염소'], ['참새', '강아지']]), x = ri(3, 20), y = ri(3, 20), ask = pick([n1, n2]);
+    return { q: n1 + '와 ' + n2 + '가 모두 ' + (x + y) + '마리 있고, 다리의 수의 합은 ' + (2 * x + 4 * y) + '개이다. ' + (ask === n1 ? n1 : n2) + '는 몇 마리인지 구하시오.',
+      a: (ask === n1 ? x : y) + '마리', h: n1 + '를 ' + V('x') + '마리, ' + n2 + '를 ' + V('y') + '마리라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + (x + y) + ', 2' + V('x') + ' + 4' + V('y') + ' = ' + (2 * x + 4 * y), p: { x, y, ask: ask === n1 ? 0 : 1 } };
+  }
+});
+def('Q-E5', 'Q', 0, () => {
+  for (let t = 0; t < 200; t++) {
+    const pp = pick([300, 400, 500, 600, 800, 900]), qq = pick([500, 700, 800, 1000, 1200, 1500]), m1 = ri(1, 5), n1 = ri(1, 5), m2 = ri(1, 5), n2 = ri(1, 5), ask = pick(['연필', '공책']);
+    if (m1 * n2 - n1 * m2 === 0) continue;
+    const A = m1 * pp + n1 * qq, B = m2 * pp + n2 * qq;
+    return { q: '연필 ' + m1 + '자루와 공책 ' + n1 + '권의 값은 ' + A + '원이고, 연필 ' + m2 + '자루와 공책 ' + n2 + '권의 값은 ' + B + '원이다. ' + ask + ' 한 ' + (ask === '연필' ? '자루' : '권') + '의 값을 구하시오.',
+      a: (ask === '연필' ? pp : qq) + '원', h: '연필 한 자루의 값을 ' + V('x') + '원, 공책 한 권의 값을 ' + V('y') + '원이라 하고 연립방정식을 세운다', p: { m1, n1, A, m2, n2, B, pp, qq, ask: ask === '연필' ? 0 : 1 } };
+  }
+});
+
+/* ================= 연립방정식 · 중 ================= */
+def('Q-M1', 'Q', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const p = pick([2, 3, 4, 5]), q = pick([2, 3, 4, 5, 6]), u = nz(-4, 4), v = nz(-4, 4), x0 = p * u, y0 = q * v, a = nz(-4, 4), b = nz(-4, 4);
+    if (a * q * 0 + (a * (-q) - b * p * 0) === 0) continue;
+    const r = u - v, c = a * x0 + b * y0;
+    const detv = (1 / p) * b - (-1 / q) * a; if (Math.abs(detv) < 1e-9) continue;
+    return { q: '연립방정식 ' + sysH(fracHtml(V('x'), p) + ' − ' + fracHtml(V('y'), q) + ' = ' + num(r), lin2(a, b, c)) + '을 푸시오.',
+      a: xyAns(x0, y0), h: '첫째 식에 ' + (p * q / gcd(p, q)) + '을 곱하여 분모를 없앤 뒤 푼다', p: { p, q, r, a, b, c, x0, y0 } };
+  }
+});
+def('Q-M2', 'Q', 1, () => {
+  for (let t = 0; t < 300; t++) {
+    const x0 = nz(-4, 4), y0 = nz(-4, 4), a = nz(-4, 4), b = nz(-4, 4), p1 = nz(-3, 3), q1 = nz(-3, 3);
+    if (p1 * (-1) - q1 * 3 === 0) continue;
+    const c1 = p1 * x0 + q1 * y0, c2 = 3 * x0 - y0, r = a * x0 + y0, s = x0 - b * y0;
+    return { q: '두 연립방정식 ' + sysH(lin2(p1, q1, c1), lin2(3, -1, c2)) + ' 과 ' + sysH(V('a') + V('x') + ' + ' + V('y') + ' = ' + num(r), V('x') + ' − ' + V('b') + V('y') + ' = ' + num(s)) + '의 해가 같을 때, ' + V('a') + ' + ' + V('b') + '의 값을 구하시오.',
+      a: num(a + b), h: '해가 같으므로 먼저 ' + V('a') + ', ' + V('b') + '가 없는 두 식으로 해를 구한다', p: { p1, q1, c1, c2, r, s, a, b, x0, y0 } };
+  }
+});
+def('Q-M3', 'Q', 1, () => {
+  for (let t = 0; t < 100; t++) {
+    const [a, b] = pick([[3, 5], [4, 6], [2, 5], [3, 6], [4, 8], [5, 10], [6, 9], [2, 4]]), u = ri(1, 4), v = ri(1, 4), d = a * u + b * v, T = u + v;
+    return { q: '집에서 시속 ' + a + ' km로 걷다가 중간부터 시속 ' + b + ' km로 걸어서 총 ' + d + ' km를 ' + T + '시간 만에 갔다. 시속 ' + a + ' km로 걸은 거리는 몇 km인지 구하시오.',
+      a: (a * u) + ' km', h: '시속 ' + a + ' km로 걸은 거리를 ' + V('x') + ' km, 시속 ' + b + ' km로 걸은 거리를 ' + V('y') + ' km라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + d + ', ' + V('x') + '/' + a + ' + ' + V('y') + '/' + b + ' = ' + T, p: { a, b, u, v, d, T } };
+  }
+});
+def('Q-M4', 'Q', 1, () => {
+  for (let t = 0; t < 400; t++) {
+    const lo = ri(2, 8), hi = lo + ri(2, 8), x = 100 * ri(1, 4), y = 100 * ri(1, 4), tot = x + y, c = (lo * x + hi * y) / tot;
+    if (!Number.isInteger(c) || x === y) continue;
+    return { q: lo + '%의 소금물과 ' + hi + '%의 소금물을 섞어서 ' + c + '%의 소금물 ' + tot + ' g을 만들었다. ' + lo + '%의 소금물은 몇 g을 섞었는지 구하시오.',
+      a: x + ' g', h: lo + '%의 소금물을 ' + V('x') + ' g, ' + hi + '%의 소금물을 ' + V('y') + ' g이라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + tot + ', ' + lo + V('x') + ' + ' + hi + V('y') + ' = ' + (c * tot), p: { lo, hi, c, tot, x, y } };
+  }
+});
+def('Q-M5', 'Q', 1, () => {
+  for (let t = 0; t < 100; t++) {
+    const p = ri(1, 8), q = ri(1, 9); if (p === q) continue;
+    const s = p + q, d = 9 * (q - p), N = 10 * p + q;
+    return { q: '두 자리 자연수가 있다. 각 자리의 숫자의 합은 ' + s + '이고, 십의 자리의 숫자와 일의 자리의 숫자를 바꾼 수는 처음 수보다 ' + Math.abs(d) + (d > 0 ? ' 크다' : ' 작다') + '. 처음 수를 구하시오.',
+      a: String(N), h: '십의 자리 숫자를 ' + V('x') + ', 일의 자리 숫자를 ' + V('y') + '라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + s + ', (10' + V('y') + ' + ' + V('x') + ') − (10' + V('x') + ' + ' + V('y') + ') = ' + num(d), p: { p, q, s, d, N } };
+  }
+});
+
+/* ================= 연립방정식 · 상 ================= */
+def('Q-H1', 'Q', 2, () => {
+  for (let t = 0; t < 100; t++) {
+    const p = nz(-4, 4), q = nz(-4, 4), r = nz(-6, 6), k = pick([2, 3, -2, -1]);
+    if (k === 1) continue;
+    return { q: '연립방정식 ' + sysH(lin2(p, q, r), V('a') + V('x') + (k * q < 0 ? ' − ' : ' + ') + (Math.abs(k * q) === 1 ? '' : Math.abs(k * q)) + V('y') + ' = ' + V('b')) + '의 해가 없을 때, 상수 ' + V('a') + ', ' + V('b') + '의 조건을 구하시오.',
+      a: V('a') + ' = ' + num(k * p) + ', ' + V('b') + ' ≠ ' + num(k * r), h: '두 식에서 ' + V('x') + ', ' + V('y') + '의 계수의 비가 같고 상수항의 비는 달라야 한다', p: { p, q, r, k } };
+  }
+});
+def('Q-H2', 'Q', 2, () => {
+  for (let t = 0; t < 300; t++) {
+    const x0 = ri(-4, 4), y0 = ri(-4, 4), p = nz(-3, 4), q = nz(-3, 4), r = nz(-3, 4), s = nz(-3, 4);
+    if (p * s - q * r === 0 || (x0 === 0 && y0 === 0)) continue;
+    const C = p * x0 + q * y0, tt = C - (r * x0 + s * y0);
+    if (tt === 0 || Math.abs(C) > 15) continue;
+    return { q: '방정식 ' + xyTxt(p, q, 0) + ' = ' + xyTxt(r, s, tt) + ' = ' + num(C) + '의 해를 구하시오.',
+      a: xyAns(x0, y0), h: V('A') + ' = ' + V('B') + ' = ' + V('C') + ' 꼴은 ' + V('A') + ' = ' + V('C') + ', ' + V('B') + ' = ' + V('C') + ' 로 나누어 연립방정식으로 푼다', p: { p, q, r, s, tt, C, x0, y0 } };
+  }
+});
+def('Q-H3', 'Q', 2, () => {
+  const opts = []; for (let a = 2; a <= 60; a++) for (let b = 2; b <= 60; b++) { if (a !== b && (a * b) % (a + b) === 0 && (a * b) / (a + b) >= 2) opts.push([a, b, (a * b) / (a + b)]); }
+  const [a, b, t] = pick(opts), ask = pick(['A', 'B']);
+  const [self, other] = ask === 'A' ? ['B', 'A'] : ['A', 'B'], sd = ask === 'A' ? b : a, ansd = ask === 'A' ? a : b;
+  return { q: '어떤 일을 ' + self + ' 혼자서 하면 ' + sd + '일이 걸리고, ' + 'A와 B가 함께 하면 ' + t + '일이 걸린다. 이 일을 ' + other + ' 혼자서 하면 며칠이 걸리는지 구하시오.',
+    a: ansd + '일', h: '전체 일의 양을 1로 놓고 하루에 하는 일의 양을 ' + V('x') + ', ' + V('y') + '라 한다', p: { a, b, t, ask: ask === 'A' ? 0 : 1 } };
+});
+def('Q-H4', 'Q', 2, () => {
+  for (let t = 0; t < 500; t++) {
+    const p = pick([10, 20, 25, 30, 40, 50]), q = pick([10, 20, 25, 40, 50]), x = 20 * ri(5, 30), y = 20 * ri(5, 30);
+    if ((p * x) % 100 || (q * y) % 100) continue;
+    const dd = (p * x - q * y) / 100; if (dd === 0) continue;
+    return { q: '어느 학교의 작년 전체 학생 수는 ' + (x + y) + '명이었다. 올해는 작년에 비해 남학생이 ' + p + '% 증가하고 여학생이 ' + q + '% 감소하여 전체 학생 수가 ' + Math.abs(dd) + '명 ' + (dd > 0 ? '증가' : '감소') + '하였다. 올해의 남학생 수를 구하시오.',
+      a: (x + (p * x) / 100) + '명', h: '작년의 남학생 수를 ' + V('x') + ', 여학생 수를 ' + V('y') + '라 하면 ' + V('x') + ' + ' + V('y') + ' = ' + (x + y) + ', ' + p + '/100·' + V('x') + ' − ' + q + '/100·' + V('y') + ' = ' + num(dd), p: { p, q, x, y, dd } };
+  }
+});
+def('Q-H5', 'Q', 2, () => {
+  for (let t = 0; t < 200; t++) {
+    const a = ri(1, 5), b = ri(1, 5); if (a === b || gcd(a, b) > 1) continue;
+    const c = nz(-3, 5), d = nz(-3, 5), k = ri(1, 6), e = c * a * k + d * b * k; if (c * a + d * b === 0) continue;
+    const ask = pick(['x', 'y']);
+    return { q: V('x') + ' : ' + V('y') + ' = ' + a + ' : ' + b + '이고 ' + xyTxt(c, d, 0) + ' = ' + num(e) + '일 때, ' + V(ask) + '의 값을 구하시오.',
+      a: String(ask === 'x' ? a * k : b * k), h: V('x') + ' = ' + a + V('k') + ', ' + V('y') + ' = ' + b + V('k') + '로 놓고 대입한다', p: { a, b, c, d, e, k, ask: ask === 'x' ? 0 : 1 } };
+  }
+});
+
+/* ===== 삼각형의 성질(T) · 사각형의 성질(R) ===== */
+const dg = (n) => num(n) + '°';
+const rad = (d) => d * Math.PI / 180;
+const isoPts = (base) => ({ A: [0, Math.tan(rad(base))], B: [-1, 0], C: [1, 0] });
+const TRP = [[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]];
+const scaled = (even) => { const t = pick(TRP), k = even && t[2] % 2 ? 2 : pick([1, 1, 2]); return t.map((x) => x * k); };
+const parPts = (ab, ad, th) => { const t = rad(th || 65); return { A: [ab * Math.cos(t), ab * Math.sin(t)], B: [0, 0], C: [ad, 0], D: [ab * Math.cos(t) + ad, ab * Math.sin(t)] }; };
+const hTxt = (s) => s;
+
+/* ---------- T 삼각형의 성질 ---------- */
+def('T-E1', 'T', 0, () => {
+  const a = 2 * ri(10, 60), base = (180 - a) / 2;
+  return { q: '삼각형 ABC에서 AB = AC이고 ∠A = ' + dg(a) + '일 때, ∠B의 크기를 구하시오.', a: dg(base),
+    h: '이등변삼각형의 두 밑각의 크기는 같다', p: { a, ans: base }, svg: fig({ pts: isoPts(base), polys: [['A', 'B', 'C']], notes: [['A', dg(a), 0, 22]] }) };
+});
+def('T-E2', 'T', 0, () => {
+  const b = ri(40, 80), ask = pick([0, 1]);
+  const C = [3, 0], pts = { A: [1, Math.tan(rad(b))], B: [-1, 0], C: [1, 0], D: [3, 0] }; pts.A = [0, Math.tan(rad(b))]; pts.B = [-1, 0]; pts.C = [1, 0]; pts.D = [2.6, 0];
+  const ans = ask ? 180 - 2 * b : 180 - b;
+  return { q: '삼각형 ABC에서 AB = AC이고 ∠B = ' + dg(b) + '이다. 변 BC의 연장선 위에 점 D를 잡을 때, ' + (ask ? '∠A' : '∠ACD') + '의 크기를 구하시오.', a: dg(ans),
+    h: ask ? '∠C = ∠B이므로 ∠A = 180° − 2 × ∠B' : '∠ACD는 ∠C의 외각이므로 ∠A + ∠B와 같다', p: { b, ask, ans },
+    svg: fig({ pts, polys: [['A', 'B', 'C']], segs: [['C', 'D']], notes: [['B', dg(b), 16, -8]] }) };
+});
+def('T-E3', 'T', 0, () => {
+  if (rng() < 0.5) {
+    const x = ri(10, 40);
+    return { q: '삼각형 ABC에서 AB = AC이고, 꼭지각 A의 이등분선이 변 BC와 만나는 점을 D라 하자. ∠BAD = ' + dg(x) + '일 때, ∠C의 크기를 구하시오.', a: dg(90 - x),
+      h: '꼭지각의 이등분선은 밑변을 수직이등분하므로 ∠ADC = 90°', p: { t: 0, x, ans: 90 - x }, svg: fig({ pts: { A: [0, 2.2], B: [-1.2, 0], C: [1.2, 0], D: [0, 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'D', 'd']], rights: [['D', 'A', 'C']] }) };
+  }
+  const m = ri(3, 14);
+  return { q: '삼각형 ABC에서 AB = AC이고, 꼭지각 A의 이등분선이 변 BC와 만나는 점을 D라 하자. BC = ' + 2 * m + ' cm일 때, BD의 길이를 구하시오.', a: m + ' cm',
+    h: '꼭지각의 이등분선은 밑변을 수직이등분한다', p: { t: 1, m, ans: m }, svg: fig({ pts: { A: [0, 2.2], B: [-1.2, 0], C: [1.2, 0], D: [0, 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'D', 'd']], rights: [['D', 'A', 'C']], edges: [['B', 'C', 2 * m + ' cm', -1]], off: { D: [14, -8] } }) };
+});
+def('T-E4', 'T', 0, () => {
+  const a = ri(30, 80), ask = pick([0, 1]);
+  const ans = ask ? a : 2 * a;
+  return { q: '삼각형 ABC의 외심을 O라 하자. ' + (ask ? '∠BOC = ' + dg(2 * a) + '일 때, ∠A' : '∠A = ' + dg(a) + '일 때, ∠BOC') + '의 크기를 구하시오.', a: dg(ans),
+    h: '(원주각) × 2 = (중심각)이므로 ∠BOC = 2∠A', p: { a, ask, ans },
+    svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], O: [2, 1.3] }, polys: [['A', 'B', 'C']], segs: [['O', 'B'], ['O', 'C']], circles: [{ c: 'O', r: 2.38, color: '#9ca3af', dash: 1 }], inner: ['O'] }) };
+});
+def('T-E5', 'T', 0, () => {
+  const a = 2 * ri(20, 50), ask = pick([0, 1]);
+  const c = 90 + a / 2, ans = ask ? a : c;
+  return { q: '삼각형 ABC의 내심을 I라 하자. ' + (ask ? '∠BIC = ' + dg(c) + '일 때, ∠A' : '∠A = ' + dg(a) + '일 때, ∠BIC') + '의 크기를 구하시오.', a: dg(ans),
+    h: '∠BIC = 90° + ½∠A', p: { a, ask, ans, c }, svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], I: [1.7, 1.0] }, polys: [['A', 'B', 'C']], segs: [['I', 'A', 'g'], ['I', 'B'], ['I', 'C']], inner: ['I'] }) };
+});
+def('T-E6', 'T', 0, () => {
+  const [a, b, c] = scaled(true), ask = pick([0, 1]);
+  if (ask) return { q: '∠A = 90°인 직각삼각형 ABC에서 AB = ' + a + ' cm, AC = ' + b + ' cm, BC = ' + c + ' cm이다. 이 삼각형의 외접원의 반지름의 길이를 구하시오.', a: c / 2 + ' cm',
+    h: '직각삼각형의 외심은 빗변의 중점이다', p: { a, b, c, ask, ans: c / 2 }, svg: fig({ pts: { A: [0, 0], B: [a, 0], C: [0, b], O: [a / 2, b / 2] }, polys: [['A', 'B', 'C']], rights: [['A', 'B', 'C']], hide: ['O'] }) };
+  const r = ri(3, 12);
+  return { q: '∠A = 90°인 직각삼각형 ABC의 외접원의 반지름의 길이가 ' + r + ' cm일 때, 빗변 BC의 길이를 구하시오.', a: 2 * r + ' cm',
+    h: '직각삼각형의 외심은 빗변의 중점이므로 (빗변) = 2 × (외접원의 반지름)', p: { r, ask, ans: 2 * r } };
+});
+def('T-E7', 'T', 0, () => {
+  const [a, b, c] = scaled(false), S = a * b / 2, L = a + b + c, r = (a + b - c) / 2;
+  return { q: '넓이가 ' + S + ' cm², 둘레의 길이가 ' + L + ' cm인 삼각형 ABC의 내접원의 반지름의 길이를 구하시오.', a: r + ' cm',
+    h: '(삼각형의 넓이) = ½ × (내접원의 반지름) × (둘레의 길이)', p: { S, L, r } };
+});
+def('T-E8', 'T', 0, () => {
+  const x0 = ri(2, 9), p1 = ri(2, 5), r1 = ri(1, 4), q1 = ri(-3, 6);
+  if (p1 === r1) return pick(['T-E8']) && BANK.find((b) => b.id === 'T-E8').g();
+  const s = p1 * x0 + q1 - r1 * x0, v = p1 * x0 + q1;
+  return { q: '그림에서 OP는 ∠XOY의 이등분선이고 PA ⊥ OX, PB ⊥ OY이다. PA = ' + p1 + V('x') + (q1 < 0 ? ' − ' : ' + ') + Math.abs(q1) + ', PB = ' + r1 + V('x') + (s < 0 ? ' − ' : ' + ') + Math.abs(s) + '일 때, PA의 길이를 구하시오.', a: String(v),
+    h: '각의 이등분선 위의 점에서 두 변까지의 거리는 같으므로 PA = PB', p: { p1, q1, r1, s, x0, ans: v },
+    svg: fig({ pts: { O: [0, 0], X: [4, 0], Y: [2.6, 3.1], P: [2.4, 1.119], A: [2.4, 0], B: [1.543, 1.838] }, segs: [['O', 'X'], ['O', 'Y'], ['O', 'P', 'b'], ['P', 'A', 'd'], ['P', 'B', 'd']], rights: [['A', 'O', 'P'], ['B', 'O', 'P']], off: { P: [12, -4], B: [-10, -6] } }) };
+});
+def('T-M1', 'T', 1, () => {
+  const c = ri(62, 86), d = 3 * c - 180, A0 = 180 - 2 * c;
+  const Bp = [0, 0], Cp = [1, 0], Ap = [0.5, 0.5 * Math.tan(rad(c))], u = [Ap[0] - Cp[0], Ap[1] - Cp[1]], t = -2 * Cp[0] * u[0] / (u[0] * u[0] + u[1] * u[1]);
+  const Dp = [Cp[0] + t * u[0], Cp[1] + t * u[1]];
+  return { q: '삼각형 ABC에서 AB = AC이고, 변 AC 위의 점 D에 대하여 BD = BC이다. ∠ABD = ' + dg(d) + '일 때, ∠A의 크기를 구하시오.', a: dg(A0),
+    h: '∠B = ∠C = ' + V('x') + '라 하면 ∠BDC = ' + V('x') + ', ∠DBC = 180° − 2' + V('x') + ', ∠ABD = ∠B − ∠DBC = 3' + V('x') + ' − 180°', p: { c, d, ans: A0 },
+    svg: fig({ pts: { A: Ap, B: Bp, C: Cp, D: Dp }, polys: [['A', 'B', 'C']], segs: [['B', 'D']] }) };
+});
+def('T-M2', 'T', 1, () => {
+  const b = ri(20, 60);
+  return { q: '삼각형 ABC의 외심을 O라 하자. ∠OBC = ' + dg(b) + '일 때, ∠A의 크기를 구하시오.', a: dg(90 - b),
+    h: 'OB = OC이므로 ∠OCB = ∠OBC, ∠BOC = 180° − 2 × ' + b + '° = 2∠A', p: { b, ans: 90 - b },
+    svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], O: [2, 1.3] }, polys: [['A', 'B', 'C']], segs: [['O', 'B'], ['O', 'C']], inner: ['O'] }) };
+});
+def('T-M3', 'T', 1, () => {
+  const b = ri(15, 40), c = ri(15, 40), A0 = 180 - 2 * (b + c);
+  return { q: '삼각형 ABC의 내심을 I라 하자. ∠IBC = ' + dg(b) + ', ∠ICB = ' + dg(c) + '일 때, ∠A의 크기를 구하시오.', a: dg(A0),
+    h: '∠B = 2∠IBC, ∠C = 2∠ICB이므로 ∠A = 180° − (∠B + ∠C)', p: { b, c, ans: A0 },
+    svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], I: [1.7, 1.0] }, polys: [['A', 'B', 'C']], segs: [['I', 'A', 'g'], ['I', 'B'], ['I', 'C']], inner: ['I'] }) };
+});
+def('T-M4', 'T', 1, () => {
+  const x = ri(10, 40), y = ri(10, 40); if (x + y > 75) return BANK.find((b) => b.id === 'T-M4').g();
+  const ask = pick(['∠OCA', '∠OAB', '∠OBC']);
+  const z = 90 - x - y, vals = { '∠OAB': x, '∠OBC': y, '∠OCA': z }, keys = ['∠OAB', '∠OBC', '∠OCA'].filter((k) => k !== ask);
+  return { q: '예각삼각형 ABC의 외심을 O라 하자. ' + keys[0] + ' = ' + dg(vals[keys[0]]) + ', ' + keys[1] + ' = ' + dg(vals[keys[1]]) + '일 때, ' + ask + '의 크기를 구하시오.', a: dg(vals[ask]),
+    h: '외심에서 세 꼭짓점에 이르는 거리가 같으므로 ∠OAB + ∠OBC + ∠OCA = 90°', p: { x, y, z, ask, ans: vals[ask] },
+    svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], O: [2, 1.3] }, polys: [['A', 'B', 'C']], segs: [['O', 'A'], ['O', 'B'], ['O', 'C']], inner: ['O'] }) };
+});
+def('T-M5', 'T', 1, () => {
+  const u = ri(2, 9), v = ri(2, 9), w = ri(2, 9), a = v + w, b = u + w, c = u + v, ask = pick([['AF', u], ['BD', v], ['CE', w]]);
+  return { q: '삼각형 ABC의 내접원이 변 BC, CA, AB와 만나는 점을 각각 D, E, F라 하자. AB = ' + c + ', BC = ' + a + ', CA = ' + b + '일 때, ' + ask[0] + '의 길이를 구하시오.', a: String(ask[1]),
+    h: 'AF = AE = ' + V('x') + ', BF = BD = ' + V('y') + ', CD = CE = ' + V('z') + '라 하고 연립방정식을 세운다', p: { u, v, w, a, b, c, ask: ask[0], ans: ask[1] },
+    svg: fig({ pts: { A: [1.4, 3.1], B: [0, 0], C: [4, 0], F: [0.7, 1.55], E: [2.7, 1.55], D: [1.8, 0] }, polys: [['A', 'B', 'C']], edges: [['A', 'B', c, 1], ['B', 'C', a, -1], ['C', 'A', b, 1]], off: { D: [0, -11] } }) };
+});
+def('T-M6', 'T', 1, () => {
+  const [a, b, c] = scaled(false), r = (a + b - c) / 2;
+  return { q: '∠C = 90°인 직각삼각형 ABC의 내접원의 반지름의 길이가 ' + r + ' cm이고 빗변 AB의 길이가 ' + c + ' cm일 때, 나머지 두 변의 길이의 합을 구하시오.', a: (2 * r + c) + ' cm',
+    h: 'CE = CD = r이므로 (두 변의 합) = (빗변) + 2r', p: { r, c, ans: 2 * r + c } };
+});
+def('T-M7', 'T', 1, () => {
+  const b = ri(20, 70);
+  return { q: '∠A = 90°인 직각삼각형 ABC에서 빗변 BC의 중점을 M이라 하자. ∠B = ' + dg(b) + '일 때, ∠AMC의 크기를 구하시오.', a: dg(2 * b),
+    h: 'MA = MB = MC이므로 ∠MAB = ∠B이고 ∠AMC는 △ABM의 외각이다', p: { b, ans: 2 * b },
+    svg: fig({ pts: { A: [0, 0], B: [2.5, 0], C: [0, 2.5 * Math.tan(rad(b))], M: [1.25, 1.25 * Math.tan(rad(b))] }, polys: [['A', 'B', 'C']], segs: [['A', 'M']], rights: [['A', 'B', 'C']], inner: ['M'] }) };
+});
+def('T-H1', 'T', 2, () => {
+  const a = 2 * ri(25, 40), s = 2 * a + 90 + a / 2;
+  return { q: '삼각형 ABC의 외심을 O, 내심을 I라 하자. ∠A = ' + dg(a) + '일 때, ∠BOC + ∠BIC의 크기를 구하시오.', a: dg(s),
+    h: '∠BOC = 2∠A, ∠BIC = 90° + ½∠A', p: { a, ans: s } };
+});
+def('T-H2', 'T', 2, () => {
+  const [a, b, c] = scaled(false), r = (a + b - c) / 2, S = a * b / 2, rr = r * r;
+  return { q: '∠C = 90°인 직각삼각형 ABC의 세 변의 길이가 AC = ' + a + ' cm, BC = ' + b + ' cm, AB = ' + c + ' cm이다. 이 삼각형의 내접원을 그릴 때, 색칠한 부분(삼각형에서 원을 제외한 부분)의 넓이를 구하시오.', a: S + ' − ' + rr + 'π (cm²)',
+    h: '내접원의 반지름 r = (a + b − c)/2 = ' + r, p: { a, b, c, r, S, rr },
+    svg: fig({ pts: { C: [0, 0], A: [0, a], B: [b, 0], I: [r, r] }, polys: [['A', 'B', 'C']], circles: [{ c: 'I', r: r, color: '#2563eb' }], rights: [['C', 'A', 'B']], hide: ['I'] }) };
+});
+def('T-H3', 'T', 2, () => {
+  const a = ri(4, 12), b = a + ri(1, a - 1);
+  return { q: '이등변삼각형의 두 변의 길이가 ' + a + ' cm, ' + b + ' cm일 때, 이 삼각형의 둘레의 길이가 될 수 있는 값을 모두 구하시오.', a: (2 * a + b) + ' cm 또는 ' + (a + 2 * b) + ' cm',
+    h: '(' + a + ', ' + a + ', ' + b + ')와 (' + a + ', ' + b + ', ' + b + ') 두 경우 모두 삼각형의 결정 조건(가장 긴 변 < 나머지 두 변의 합)을 만족하는지 확인한다', p: { a, b } };
+});
+def('T-H4', 'T', 2, () => {
+  const t = pick(TRP), k = (t[2] % 2 ? 2 : 1) * pick([1, 1, 2]), [a, b, c] = t.map((x) => x * k), R = c / 2, r = (a + b - c) / 2, area = r * (2 * R + r);
+  return { q: '직각삼각형 ABC의 외접원의 반지름의 길이가 ' + R + ' cm이고, 내접원의 반지름의 길이가 ' + r + ' cm일 때, 이 삼각형의 넓이를 구하시오.', a: area + ' cm²',
+    h: '빗변 = 2R = ' + 2 * R + ', 두 변의 합 = 빗변 + 2r이므로 둘레 = 4R + 2r이고 넓이 = ½ × r × (둘레)', p: { a, b, c, R, r, ans: area } };
+});
+
+/* ---------- R 사각형의 성질 ---------- */
+def('R-E1', 'R', 0, () => {
+  const [m, n] = pick([[1, 2], [1, 3], [1, 4], [1, 5], [2, 3], [2, 7], [4, 5], [1, 8]]);
+  const A0 = 180 * m / (m + n);
+  return { q: '평행사변형 ABCD에서 ∠A : ∠B = ' + m + ' : ' + n + '일 때, ∠A의 크기를 구하시오.', a: dg(A0),
+    h: '평행사변형에서 이웃하는 두 각의 크기의 합은 180°', p: { m, n, ans: A0 }, svg: fig({ pts: parPts(3, 5), polys: [['A', 'B', 'C', 'D']] }) };
+});
+def('R-E2', 'R', 0, () => {
+  const x0 = ri(2, 9), p = ri(2, 5), r = ri(1, 4); if (p === r) return BANK.find((b) => b.id === 'R-E2').g();
+  const q = ri(-3, 5), s = p * x0 + q - r * x0, v = p * x0 + q;
+  if (s < 1) return BANK.find((b) => b.id === 'R-E2').g();
+  return { q: '평행사변형 ABCD에서 AB = ' + p + V('x') + (q < 0 ? ' − ' : ' + ') + Math.abs(q) + ', DC = ' + r + V('x') + ' + ' + s + '일 때, AB의 길이를 구하시오.', a: String(v),
+    h: '평행사변형에서 두 쌍의 대변의 길이는 각각 같으므로 AB = DC', p: { p, q, r, s, x0, ans: v }, svg: fig({ pts: parPts(3, 5), polys: [['A', 'B', 'C', 'D']] }) };
+});
+def('R-E3', 'R', 0, () => {
+  const ab = ri(3, 12), ac = 2 * ri(3, 10), bd = 2 * ri(3, 10), ans = ab + ac / 2 + bd / 2;
+  const P = parPts(3, 5), O = [(P.A[0] + P.C[0]) / 2, (P.A[1] + P.C[1]) / 2];
+  return { q: '평행사변형 ABCD의 두 대각선의 교점을 O라 하자. AB = ' + ab + ' cm, AC = ' + ac + ' cm, BD = ' + bd + ' cm일 때, 삼각형 OAB의 둘레의 길이를 구하시오.', a: ans + ' cm',
+    h: '평행사변형의 두 대각선은 서로 다른 것을 이등분한다', p: { ab, ac, bd, ans }, svg: fig({ pts: Object.assign({}, P, { O }), polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], inner: ['O'] }) };
+});
+def('R-E4', 'R', 0, () => {
+  const x = ri(20, 70);
+  return { q: '직사각형 ABCD의 두 대각선의 교점을 O라 하자. ∠OAB = ' + dg(x) + '일 때, ∠AOB의 크기를 구하시오.', a: dg(180 - 2 * x),
+    h: '직사각형의 두 대각선은 길이가 같고 서로 다른 것을 이등분하므로 OA = OB', p: { x, ans: 180 - 2 * x },
+    svg: fig({ pts: { A: [0, 3], B: [0, 0], C: [5, 0], D: [5, 3], O: [2.5, 1.5] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], inner: ['O'], rights: [['B', 'A', 'C']] }) };
+});
+def('R-E5', 'R', 0, () => {
+  const a = 2 * ri(15, 80);
+  return { q: '마름모 ABCD에서 ∠A = ' + dg(a) + '일 때, ∠ABD의 크기를 구하시오.', a: dg((180 - a) / 2),
+    h: '마름모는 네 변의 길이가 같으므로 △ABD는 AB = AD인 이등변삼각형이다', p: { a, ans: (180 - a) / 2 },
+    svg: fig({ pts: { A: [0, 2], B: [-3, 0], C: [0, -2], D: [3, 0] }, polys: [['A', 'B', 'C', 'D']], segs: [['B', 'D', 'd']], off: { A: [0, -13], C: [0, 15] } }) };
+});
+def('R-E6', 'R', 0, () => {
+  const [p, q, s] = pick(TRP.slice(0, 3)), k = ri(1, 3);
+  return { q: '마름모 ABCD의 두 대각선의 교점을 O라 하자. AO = ' + p * k + ' cm, BO = ' + q * k + ' cm일 때, 마름모의 둘레의 길이를 구하시오.', a: (4 * s * k) + ' cm',
+    h: '마름모의 두 대각선은 서로 수직이등분한다', p: { p: p * k, q: q * k, s: s * k, ans: 4 * s * k },
+    svg: fig({ pts: { A: [0, p], B: [-q, 0], C: [0, -p], D: [q, 0], O: [0, 0] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], rights: [['O', 'A', 'D']], hide: [], off: { O: [10, -9] } }) };
+});
+def('R-E7', 'R', 0, () => {
+  const b = ri(55, 80);
+  return { q: '사다리꼴 ABCD에서 AD // BC이고 AB = DC이다. ∠B = ' + dg(b) + '일 때, ∠A의 크기를 구하시오.', a: dg(180 - b),
+    h: '등변사다리꼴에서 ∠B = ∠C이고, AD // BC이므로 ∠A + ∠B = 180°', p: { b, ans: 180 - b },
+    svg: fig({ pts: { A: [1, 2], D: [4, 2], B: [0, 0], C: [5, 0] }, polys: [['A', 'B', 'C', 'D']] }) };
+});
+def('R-E8', 'R', 0, () => {
+  const x0 = ri(1, 8), y0 = ri(1, 8), p = ri(2, 5), r = ri(1, 3), q = ri(-2, 4), s0 = ri(1, 4), g = ri(2, 5), e = ri(1, 3);
+  if (p === r || g === e) return BANK.find((b) => b.id === 'R-E8').g();
+  const sx = p * x0 + q - r * x0, sy = g * y0 + s0 - e * y0;
+  if (sx < 1 || sy < 1) return BANK.find((b) => b.id === 'R-E8').g();
+  return { q: '사각형 ABCD의 두 대각선의 교점을 O라 하자. AO = ' + p + V('x') + (q < 0 ? ' − ' : ' + ') + Math.abs(q) + ', CO = ' + r + V('x') + ' + ' + sx + ', BO = ' + g + V('y') + ' + ' + s0 + ', DO = ' + e + V('y') + ' + ' + sy + '이다. 사각형 ABCD가 평행사변형이 되도록 하는 ' + V('x') + ' + ' + V('y') + '의 값을 구하시오.', a: String(x0 + y0),
+    h: '두 대각선이 서로 다른 것을 이등분하면 평행사변형이므로 AO = CO, BO = DO', p: { p, q, r, sx, g, s0, e, sy, x0, y0, ans: x0 + y0 } };
+});
+def('R-M1', 'R', 1, () => {
+  const a = ri(3, 9), b = a + ri(2, 8);
+  const P = parPts(a, b, 62), E = [P.B[0] + a * (P.C[0] - P.B[0]) / b, 0];
+  return { q: '평행사변형 ABCD에서 ∠A의 이등분선이 변 BC와 만나는 점을 E라 하자. AB = ' + a + ' cm, AD = ' + b + ' cm일 때, EC의 길이를 구하시오.', a: (b - a) + ' cm',
+    h: 'AD // BC이므로 ∠DAE = ∠AEB이고, △ABE는 BA = BE인 이등변삼각형이다. 따라서 EC = BC − BE', p: { a, b, ans: b - a },
+    svg: fig({ pts: Object.assign({}, P, { E }), polys: [['A', 'B', 'C', 'D']], segs: [['A', 'E', 'b']] }) };
+});
+def('R-M2', 'R', 1, () => {
+  const u = ri(3, 15), t = ri(3, 15), S = 2 * (u + t), ask = pick(['△PCD', '△PDA']), ans = ask === '△PCD' ? t : u;
+  const given = ask === '△PCD' ? ['△PAB = ' + u + ' cm²'] : ['△PBC = ' + t + ' cm²'];
+  return { q: '넓이가 ' + S + ' cm²인 평행사변형 ABCD의 내부의 한 점 P에 대하여 ' + given[0] + '일 때, ' + ask + '의 넓이를 구하시오.', a: (ask === '△PCD' ? (S / 2 - u) : (S / 2 - t)) + ' cm²',
+    h: '△PAB + △PCD = △PBC + △PDA = ½ × (평행사변형의 넓이)', p: { u, t, S, ask, ans: ask === '△PCD' ? S / 2 - u : S / 2 - t },
+    svg: fig({ pts: Object.assign({}, parPts(3, 5), { P: [3.4, 1.2] }), polys: [['A', 'B', 'C', 'D']], segs: [['P', 'A'], ['P', 'B'], ['P', 'C'], ['P', 'D']], inner: ['P'] }) };
+});
+def('R-M3', 'R', 1, () => {
+  const d = 2 * ri(3, 14);
+  return { q: '직사각형 ABCD의 각 변의 중점을 E, F, G, H라 하고 사각형 EFGH를 만들었다. 직사각형의 대각선의 길이가 ' + d + ' cm일 때, 사각형 EFGH의 둘레의 길이를 구하시오.', a: 2 * d + ' cm',
+    h: '사각형 EFGH는 마름모이고 한 변의 길이는 대각선의 길이의 절반이다', p: { d, ans: 2 * d },
+    svg: fig({ pts: { A: [0, 3], B: [0, 0], C: [5, 0], D: [5, 3], E: [0, 1.5], F: [2.5, 0], G: [5, 1.5], H: [2.5, 3] }, polys: [['A', 'B', 'C', 'D']], segs: [['E', 'F', 'b'], ['F', 'G', 'b'], ['G', 'H', 'b'], ['H', 'E', 'b']] }) };
+});
+def('R-M4', 'R', 1, () => {
+  const a = 2 * ri(2, 6), d = ri(2, 9), bc = d + a, per = 3 * a + 2 * d;
+  return { q: '사다리꼴 ABCD에서 AD // BC, AB = DC = ' + a + ' cm, AD = ' + d + ' cm, ∠B = ∠C = 60°이다. 이 사다리꼴의 둘레의 길이를 구하시오.', a: per + ' cm',
+    h: 'A, D에서 BC에 내린 수선의 발을 각각 H, H′라 하면 △ABH는 한 각이 60°인 직각삼각형이므로 BH = AB의 절반이다', p: { a, d, bc, ans: per },
+    svg: fig({ pts: { A: [a / 2, a * Math.sqrt(3) / 2], D: [a / 2 + d, a * Math.sqrt(3) / 2], B: [0, 0], C: [a + d, 0] }, polys: [['A', 'B', 'C', 'D']], notes: [['B', '60°', 20, -6, '#2563eb'], ['C', '60°', -22, -6, '#2563eb']] }) };
+});
+def('R-M5', 'R', 1, () => {
+  const [p, q, s] = pick(TRP.slice(0, 3)), k = ri(1, 3), area = 2 * p * q * k * k;
+  return { q: '한 변의 길이가 ' + s * k + ' cm이고 한 대각선의 길이가 ' + 2 * p * k + ' cm인 마름모의 넓이를 구하시오.', a: area + ' cm²',
+    h: '두 대각선은 수직이등분하므로 다른 대각선의 절반은 ' + q * k + ' cm이다. (마름모의 넓이) = ½ × (대각선) × (대각선)', p: { side: s * k, d1: 2 * p * k, d2: 2 * q * k, ans: area } };
+});
+def('R-M6', 'R', 1, () => {
+  const ab = ri(3, 9), dc = ri(3, 9), a = ri(3, 8), b = a + ri(3, 9), ans = ab + (b - a) + dc;
+  const A = [1.2, 2.2], D = [1.2 + a * 0.45, 2.2], B = [0, 0], C = [b * 0.45 + 0.0 + 0.0, 0]; C[0] = Math.max(C[0], D[0] + 0.8);
+  const E = [D[0] - A[0] + B[0], 0];
+  return { q: '사다리꼴 ABCD에서 AD // BC이고, 변 BC 위의 점 E에 대하여 AB // DE이다. AB = ' + ab + ' cm, DC = ' + dc + ' cm, AD = ' + a + ' cm, BC = ' + b + ' cm일 때, 삼각형 DEC의 둘레의 길이를 구하시오.', a: ans + ' cm',
+    h: '사각형 ABED는 평행사변형이므로 DE = AB, BE = AD. 따라서 EC = BC − AD', p: { ab, dc, a, b, ans },
+    svg: fig({ pts: { A, D, B, C, E }, polys: [['A', 'B', 'C', 'D']], segs: [['D', 'E', 'b']] }) };
+});
+def('R-H1', 'R', 2, () => {
+  const a = ri(4, 9), b = a + ri(1, a - 1), ans = 2 * a - b, P = parPts(a, b, 65);
+  const E = [a, 0], F = [b - a, 0];
+  const pts = Object.assign({}, P, { E: [E[0], 0], F: [F[0], 0] });
+  return { q: '평행사변형 ABCD에서 ∠A의 이등분선과 ∠D의 이등분선이 변 BC와 만나는 점을 각각 E, F라 하자. AB = ' + a + ' cm, AD = ' + b + ' cm일 때, EF의 길이를 구하시오.', a: ans + ' cm',
+    h: 'BE = AB = ' + a + ', CF = DC = ' + a + '이므로 BF = BC − CF = ' + (b - a) + '. EF = BE − BF', p: { a, b, ans },
+    svg: fig({ pts, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'E', 'b'], ['D', 'F', 'b']], off: { E: [10, 14], F: [-10, 14] } }) };
+});
+def('R-H2', 'R', 2, () => {
+  const S = 6 * ri(2, 12);
+  const P = parPts(3, 5), M = [(P.B[0] + P.C[0]) / 2, 0], Pp = [P.B[0] + (P.D[0] - P.B[0]) / 3, P.D[1] / 3];
+  return { q: '넓이가 ' + S + ' cm²인 평행사변형 ABCD에서 변 BC의 중점을 M, 대각선 BD와 선분 AM의 교점을 P라 하자. 삼각형 ABP의 넓이를 구하시오.', a: (S / 6) + ' cm²',
+    h: '△PBM ∽ △PDA (닮음비 1 : 2)이므로 BP : PD = 1 : 2. △ABD = ' + S / 2 + '의 ⅓', p: { S, ans: S / 6 },
+    svg: fig({ pts: Object.assign({}, P, { M, P: Pp }), polys: [['A', 'B', 'C', 'D']], segs: [['A', 'M'], ['B', 'D']], inner: ['P'] }) };
+});
+def('R-H3', 'R', 2, () => {
+  const x = ri(5, 40);
+  return { q: '정사각형 ABCD의 대각선 AC 위에 점 P를 잡았다. ∠PBC = ' + dg(x) + '일 때, ∠APD의 크기를 구하시오.', a: dg(45 + x),
+    h: '△ABP ≡ △ADP (SAS)이므로 ∠APD = ∠APB. 한편 ∠APB는 △PBC의 외각이므로 ∠PBC + ∠PCB = ' + x + '° + 45°', p: { x, ans: 45 + x },
+    svg: fig({ pts: { A: [0, 4], B: [0, 0], C: [4, 0], D: [4, 4], P: [2.6, 2.6] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'P', 'b'], ['D', 'P', 'b']], inner: ['P'] }) };
+});
+def('R-H4', 'R', 2, () => {
+  const x0 = ri(2, 9), p = ri(2, 5), r = ri(1, 4); if (p === r) return BANK.find((b) => b.id === 'R-H4').g();
+  const q = ri(1, 6), s = p * x0 + q - r * x0; if (s < 1) return BANK.find((b) => b.id === 'R-H4').g();
+  const ac = p * x0 + q;
+  return { q: '사각형 ABCD의 각 변의 중점을 차례로 이어 만든 사각형 EFGH가 마름모가 되도록 하려고 한다. AC = ' + p + V('x') + ' + ' + q + ', BD = ' + r + V('x') + ' + ' + s + '일 때, 사각형 EFGH의 둘레의 길이를 구하시오.', a: (2 * ac) + '',
+    h: '사각형 EFGH는 평행사변형이고 EF = ½BD, FG = ½AC이다. 마름모이면 AC = BD이므로 ' + V('x') + '를 구한 뒤 둘레 = AC + BD', p: { p, q, r, s, x0, ans: 2 * ac } };
+});
+
+/* ===== 피타고라스 정리(P) · 확률(B) ===== */
+const sq2 = (k) => (k === 1 ? '' : k) + sqrtH(2), sq3 = (k) => (k === 1 ? '' : k) + sqrtH(3);
+const isSq = (n) => n > 0 && Number.isInteger(Math.sqrt(n));
+const triFig = (a, b, ex2) => fig({ pts: { A: [0, 0], B: [a, 0], C: [0, b] }, polys: [['A', 'B', 'C']], rights: [['A', 'B', 'C']], edges: ex2 || [] });
+const retry = (id) => BANK.find((x) => x.id === id).g();
+
+/* ---------- P ---------- */
+def('P-E1', 'P', 0, () => {
+  const [a, b, c] = scaled(false), sw = pick([0, 1]), L = sw ? [b, a] : [a, b], ask = pick(['c', 'a', 'b']);
+  const lab = { c: 'AB', a: 'AC', b: 'BC' };
+  // 직각 ∠C : AC, BC 가 직각을 낀 변, AB 빗변
+  const AC = L[0], BC = L[1], AB = c, val = { AB, AC, BC }, key = ask === 'c' ? 'AB' : ask === 'a' ? 'AC' : 'BC';
+  const known = ['AB', 'AC', 'BC'].filter((k) => k !== key);
+  return { q: '∠C = 90°인 직각삼각형 ABC에서 ' + known.map((k) => k + ' = ' + val[k] + ' cm').join(', ') + '일 때, ' + key + '의 길이를 구하시오.', a: val[key] + ' cm',
+    h: 'AC² + BC² = AB²', p: { AB, AC, BC, key, ans: val[key] },
+    svg: fig({ pts: { C: [0, 0], B: [BC, 0], A: [0, AC] }, polys: [['A', 'B', 'C']], rights: [['C', 'A', 'B']], edges: known.map((k) => (k === 'AB' ? ['A', 'B', AB, 1] : k === 'AC' ? ['C', 'A', AC, 1] : ['C', 'B', BC, -1])) }) };
+});
+def('P-E2', 'P', 0, () => {
+  if (rng() < 0.5) { const a = ri(2, 12); return { q: '한 변의 길이가 ' + a + ' cm인 정사각형의 대각선의 길이를 구하시오.', a: sq2(a) + ' cm', h: '대각선의 길이 = (한 변) × √2', p: { t: 0, a, ans2: 2 * a * a } }; }
+  const [w, h, d] = scaled(false);
+  return { q: '가로의 길이가 ' + w + ' cm, 세로의 길이가 ' + h + ' cm인 직사각형의 대각선의 길이를 구하시오.', a: d + ' cm', h: '대각선의 길이 = √(가로² + 세로²)', p: { t: 1, w, h, ans: d } };
+});
+def('P-E3', 'P', 0, () => {
+  const k = ri(1, 9), a = 2 * k, ask = pick([0, 1]);
+  return { q: '한 변의 길이가 ' + a + ' cm인 정삼각형의 ' + (ask ? '넓이' : '높이') + '를 구하시오.', a: ask ? sq3(k * k) + ' cm²' : sq3(k) + ' cm',
+    h: ask ? '(정삼각형의 넓이) = (√3/4) × (한 변)²' : '(정삼각형의 높이) = (√3/2) × (한 변)', p: { a, ask, k, ans3: ask ? k * k : k },
+    svg: fig({ pts: { A: [0, Math.sqrt(3)], B: [-1, 0], C: [1, 0] }, polys: [['A', 'B', 'C']], edges: [['B', 'C', a + ' cm', -1]] }) };
+});
+def('P-E4', 'P', 0, () => {
+  const [a, b, c] = scaled(false), ask = pick([0, 1]);
+  return { q: '직각을 낀 두 변의 길이가 ' + a + ' cm, ' + b + ' cm인 직각삼각형의 ' + (ask ? '둘레의 길이' : '넓이') + '를 구하시오.',
+    a: ask ? (a + b + c) + ' cm' : (a * b / 2) + ' cm²', h: '빗변의 길이 = √(' + a + '² + ' + b + '²) = ' + c, p: { a, b, c, ask, ans: ask ? a + b + c : a * b / 2 }, svg: triFig(a, b, [['A', 'B', a, -1], ['A', 'C', b, 1]]) };
+});
+def('P-E5', 'P', 0, () => {
+  const [a, b, c] = scaled(false), sx = pick([1, -1]), sy = pick([1, -1]), x1 = ri(-4, 4), y1 = ri(-4, 4), sw = pick([0, 1]);
+  const dx = (sw ? b : a) * sx, dy = (sw ? a : b) * sy;
+  return { q: '좌표평면 위의 두 점 A(' + num(x1) + ', ' + num(y1) + '), B(' + num(x1 + dx) + ', ' + num(y1 + dy) + ') 사이의 거리를 구하시오.', a: String(c),
+    h: 'AB = √((x좌표의 차)² + (y좌표의 차)²)', p: { x1, y1, x2: x1 + dx, y2: y1 + dy, ans: c } };
+});
+def('P-E6', 'P', 0, () => {
+  const [a, b, c] = pick([[1, 2, 2], [2, 3, 6], [2, 4, 4], [4, 4, 7], [1, 4, 8], [2, 6, 9], [6, 6, 7], [2, 10, 11]]), t = shuffle([a, b, c]), d = Math.sqrt(a * a + b * b + c * c);
+  return { q: '가로, 세로, 높이가 각각 ' + t[0] + ' cm, ' + t[1] + ' cm, ' + t[2] + ' cm인 직육면체의 대각선의 길이를 구하시오.', a: d + ' cm', h: '대각선의 길이 = √(가로² + 세로² + 높이²)', p: { a: t[0], b: t[1], c: t[2], ans: d } };
+});
+def('P-E7', 'P', 0, () => {
+  const target = pick(['예각삼각형', '직각삼각형', '둔각삼각형']);
+  for (let i = 0; i < 400; i++) {
+    let s;
+    if (target === '직각삼각형') s = scaled(false); else s = [ri(3, 15), ri(3, 15), ri(3, 15)].sort((x, y) => x - y);
+    s = s.slice().sort((x, y) => x - y); if (s[0] + s[1] <= s[2]) continue;
+    const t = s[0] * s[0] + s[1] * s[1], u = s[2] * s[2], kind = t === u ? '직각삼각형' : t > u ? '예각삼각형' : '둔각삼각형';
+    if (kind !== target) continue;
+    const sh = shuffle(s);
+    return { q: '세 변의 길이가 ' + sh.join(' cm, ') + ' cm인 삼각형은 예각삼각형, 직각삼각형, 둔각삼각형 중 어떤 삼각형인지 구하시오.', a: kind, h: '가장 긴 변의 길이의 제곱과 나머지 두 변의 길이의 제곱의 합을 비교한다', p: { s, ans: kind } };
+  }
+  return retry('P-E7');
+});
+def('P-E8', 'P', 0, () => {
+  const [b, h, a] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]]), ask = pick([0, 1]);
+  return { q: '삼각형 ABC에서 AB = AC = ' + a + ' cm, BC = ' + 2 * b + ' cm일 때, ' + (ask ? '넓이' : '꼭짓점 A에서 BC에 내린 수선 AH의 길이') + '를 구하시오.', a: ask ? (b * h) + ' cm²' : h + ' cm',
+    h: 'H는 BC의 중점이므로 BH = ' + b + ' cm이고 △ABH에서 AH = √(AB² − BH²)', p: { a, b, h, ask, ans: ask ? b * h : h },
+    svg: fig({ pts: { A: [0, h], B: [-b, 0], C: [b, 0], H: [0, 0] }, polys: [['A', 'B', 'C']], segs: [['A', 'H', 'd']], rights: [['H', 'A', 'C']], edges: [['A', 'B', a, 1], ['B', 'C', 2 * b, -1]], off: { H: [12, -8] } }) };
+});
+def('P-M1', 'P', 1, () => {
+  const [s, h, c] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10]]), k = ri(1, 2), a = ri(3, 10);
+  const S = s * k, H = h * k, C = c * k, b = a + 2 * S, area = (a + b) * H / 2;
+  return { q: '사다리꼴 ABCD에서 AD // BC, AB = DC = ' + C + ' cm, AD = ' + a + ' cm, BC = ' + b + ' cm일 때, 이 사다리꼴의 넓이를 구하시오.', a: area + ' cm²',
+    h: 'A, D에서 BC에 내린 수선의 발을 H, H′라 하면 BH = (BC − AD)/2 = ' + S + ' cm이고 높이 AH = √(AB² − BH²)', p: { a, b, C, S, H, ans: area },
+    svg: fig({ pts: { A: [S, H], D: [S + a, H], B: [0, 0], C: [b, 0] }, polys: [['A', 'B', 'C', 'D']], edges: [['A', 'D', a, 1], ['B', 'C', b, -1], ['A', 'B', C, 1]] }) };
+});
+def('P-M2', 'P', 1, () => {
+  const [l1, l2, q0] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17]]), k = ri(1, 2), sw = pick([0, 1]);
+  const pp = (sw ? l2 : l1) * k, r = (sw ? l1 : l2) * k, q = q0 * k, CF = q - r, x = F(pp * pp + CF * CF, 2 * pp);
+  return { q: '그림과 같이 AB = ' + pp + ' cm, BC = ' + q + ' cm인 직사각형 ABCD를 꼭짓점 D가 변 BC 위의 점 F에 오도록 접었다. 접는 선이 변 CD와 만나는 점을 E라 할 때, DE의 길이를 구하시오.', a: fmt(x) + ' cm',
+    h: 'AF = AD = ' + q + '이므로 BF = √(AF² − AB²) = ' + r + ', FC = ' + CF + '. DE = EF = ' + V('x') + '라 하면 △EFC에서 (' + pp + ' − ' + V('x') + ')² + ' + CF + '² = ' + V('x') + '²', p: { AB: pp, BC: q, BF: r, CF, x: x.n + '/' + x.d },
+    svg: fig({ pts: { A: [0, pp], B: [0, 0], C: [q, 0], D: [q, pp], F: [r, 0], E: [q, pp - x.val()] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'F', 'b'], ['E', 'F', 'b'], ['A', 'E', 'd']], edges: [['A', 'B', pp, 1], ['B', 'C', q, -1]], off: { E: [12, 0] } }) };
+});
+def('P-M3', 'P', 1, () => {
+  const [a, b, c] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]]), h = F(a * b, c);
+  return { q: '∠A = 90°인 직각삼각형 ABC에서 AB = ' + a + ' cm, AC = ' + b + ' cm이다. 꼭짓점 A에서 빗변 BC에 내린 수선의 길이를 구하시오.', a: fmt(h) + ' cm',
+    h: 'BC = ' + c + ' cm. (삼각형의 넓이) = ½ × AB × AC = ½ × BC × (수선의 길이)', p: { a, b, c, ans: a * b + '/' + c },
+    svg: fig({ pts: { A: [0, 0], B: [a, 0], C: [0, b], H: [a * b * b / (c * c), a * a * b / (c * c)] }, polys: [['A', 'B', 'C']], segs: [['A', 'H', 'd']], rights: [['A', 'B', 'C']], inner: ['H'] }) };
+});
+def('P-M4', 'P', 1, () => {
+  for (let i = 0; i < 300; i++) {
+    const a1 = ri(-4, 3), b1 = nz(-5, 5), a2 = ri(a1 + 1, 7), b2 = nz(-5, 5), nu = a2 * a2 + b2 * b2 - a1 * a1 - b1 * b1, de = 2 * (a2 - a1);
+    if (nu % de) continue; const x = nu / de;
+    return { q: 'x축 위의 점 P가 두 점 A(' + num(a1) + ', ' + num(b1) + '), B(' + num(a2) + ', ' + num(b2) + ')에서 같은 거리에 있을 때, 점 P의 x좌표를 구하시오.', a: num(x),
+      h: 'P(' + V('x') + ', 0)이라 하면 AP² = BP²', p: { a1, b1, a2, b2, x } };
+  }
+  return retry('P-M4');
+});
+def('P-M5', 'P', 1, () => {
+  const [w, h, d] = scaled(false), sw = pick([0, 1]);
+  return { q: '대각선의 길이가 ' + d + ' cm이고 가로의 길이가 ' + (sw ? h : w) + ' cm인 직사각형의 넓이를 구하시오.', a: (w * h) + ' cm²', h: '세로의 길이 = √(' + d + '² − ' + (sw ? h : w) + '²) = ' + (sw ? w : h) + ' cm', p: { d, w: sw ? h : w, h: sw ? w : h, ans: w * h } };
+});
+def('P-M6', 'P', 1, () => {
+  const k = ri(1, 6);
+  return { q: '세 변의 길이가 ' + V('x') + ', ' + V('x') + ' + ' + k + ', ' + V('x') + ' + ' + 2 * k + '인 삼각형이 직각삼각형일 때, 가장 긴 변의 길이를 구하시오.', a: String(5 * k),
+    h: '가장 긴 변이 빗변이므로 ' + V('x') + '² + (' + V('x') + ' + ' + k + ')² = (' + V('x') + ' + ' + 2 * k + ')²', p: { k, ans: 5 * k } };
+});
+def('P-M7', 'P', 1, () => {
+  const [r, h, l] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15]]), ask = pick([0, 1]);
+  const V3 = r * r * h / 3;
+  return { q: '밑면의 반지름의 길이가 ' + r + ' cm이고 모선의 길이가 ' + l + ' cm인 원뿔의 ' + (ask ? '부피' : '높이') + '를 구하시오.', a: ask ? V3 + 'π cm³' : h + ' cm',
+    h: '(원뿔의 높이) = √(모선² − 밑면의 반지름²) = ' + h + (ask ? ', (부피) = ⅓ × π × r² × h' : ''), p: { r, l, h, ask, V3, ans: ask ? V3 : h },
+    svg: fig({ pts: { O: [0, 0], A: [-r, 0], B: [r, 0], T: [0, h] }, polys: [['A', 'B', 'T']], segs: [['O', 'T', 'd']], rights: [['O', 'B', 'T']], edges: [['B', 'T', l, -1], ['O', 'B', r, -1]], off: { O: [0, 14] } }) };
+});
+def('P-M8', 'P', 1, () => {
+  const [L, p1, q1, p2, q2] = pick([[25, 7, 24, 15, 20], [50, 14, 48, 30, 40], [50, 14, 48, 40, 30]]);
+  // 아랫부분 p1, 높이 q1 → 윗부분이 (q1−q2) 내려오면 아랫부분 p2
+  const down = q1 - q2, out = p2 - p1; if (down <= 0 || out <= 0) return retry('P-M8');
+  return { q: '길이가 ' + L + ' m인 사다리가 벽에 기대어 있고, 사다리의 아랫부분은 벽에서 ' + p1 + ' m 떨어져 있다. 사다리의 윗부분이 ' + down + ' m 미끄러져 내려올 때, 사다리의 아랫부분은 몇 m 밀려나는지 구하시오.', a: out + ' m',
+    h: '처음 높이 = √(' + L + '² − ' + p1 + '²) = ' + q1 + ' m, 나중 높이 = ' + q2 + ' m이므로 나중 거리 = √(' + L + '² − ' + q2 + '²) = ' + p2 + ' m', p: { L, p1, q1, q2, p2, down, ans: out } };
+});
+def('P-H1', 'P', 2, () => {
+  const k = ri(2, 9);
+  return { q: '높이가 ' + sq3(k) + ' cm인 정삼각형의 넓이를 구하시오.', a: sq3(k * k) + ' cm²', h: '한 변의 길이를 ' + V('a') + '라 하면 (√3/2)' + V('a') + ' = ' + k + '√3이므로 ' + V('a') + ' = ' + 2 * k, p: { k, ans3: k * k } };
+});
+def('P-H2', 'P', 2, () => {
+  for (let i = 0; i < 400; i++) {
+    const a = ri(2, 12), b = ri(2, 12), c = ri(2, 12), d2 = a * a + c * c - b * b;
+    if (!isSq(d2)) continue;
+    return { q: '직사각형 ABCD의 내부의 한 점 P에 대하여 PA = ' + a + ', PB = ' + b + ', PC = ' + c + '일 때, PD의 길이를 구하시오.', a: String(Math.sqrt(d2)),
+      h: 'PA² + PC² = PB² + PD²', p: { a, b, c, ans: Math.sqrt(d2) },
+      svg: fig({ pts: { A: [0, 3], B: [0, 0], C: [5, 0], D: [5, 3], P: [2.1, 1.3] }, polys: [['A', 'B', 'C', 'D']], segs: [['P', 'A'], ['P', 'B'], ['P', 'C'], ['P', 'D']], inner: ['P'] }) };
+  }
+  return retry('P-H2');
+});
+def('P-H3', 'P', 2, () => {
+  const [a, b, c] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [6, 8, 10], [8, 6, 10], [8, 15, 17], [15, 8, 17]]), ask = pick(['BD', 'CD']);
+  const val = ask === 'BD' ? F(a * a, c) : F(b * b, c);
+  return { q: '∠A = 90°인 직각삼각형 ABC에서 AB = ' + a + ' cm, AC = ' + b + ' cm이고, 꼭짓점 A에서 빗변 BC에 내린 수선의 발을 D라 할 때, ' + ask + '의 길이를 구하시오.', a: fmt(val) + ' cm',
+    h: 'BC = ' + c + ' cm. △ABC ∽ △DBA ∽ △DAC (또는 직각삼각형의 닮음)에서 ' + (ask === 'BD' ? 'AB² = BD × BC' : 'AC² = CD × BC'), p: { a, b, c, ask, ans: val.n + '/' + val.d },
+    svg: fig({ pts: { A: [0, 0], B: [a, 0], C: [0, b], D: [a * b * b / (c * c), a * a * b / (c * c)] }, polys: [['A', 'B', 'C']], segs: [['A', 'D', 'd']], rights: [['A', 'B', 'C']], inner: ['D'] }) };
+});
+def('P-H4', 'P', 2, () => {
+  const a = ri(3, 8), b = a + ri(1, 8), x = F(a * a + b * b, 2 * b);
+  return { q: '∠A = 90°인 직각삼각형 ABC에서 AB = ' + a + ' cm, AC = ' + b + ' cm이다. 꼭짓점 C가 꼭짓점 B에 겹치도록 접었을 때, 접는 선이 변 AC와 만나는 점을 D라 하자. CD의 길이를 구하시오.', a: fmt(x) + ' cm',
+    h: 'CD = BD = ' + V('x') + '라 하면 AD = ' + b + ' − ' + V('x') + '이고 △ABD에서 ' + a + '² + (' + b + ' − ' + V('x') + ')² = ' + V('x') + '²', p: { a, b, ans: x.n + '/' + x.d },
+    svg: fig({ pts: { A: [0, 0], B: [0, a], C: [b, 0], D: [b - x.val(), 0] }, polys: [['A', 'B', 'C']], segs: [['B', 'D', 'b']], rights: [['A', 'C', 'B']] }) };
+});
+def('P-H5', 'P', 2, () => {
+  for (let i = 0; i < 300; i++) {
+    const a = ri(3, 9), b = a + ri(1, 6); let cnt = 0;
+    for (let x = 1; x < 40; x++) { if (!(b - a < x && x < a + b)) continue; const m = Math.max(x, b), o1 = Math.min(x, b), o2 = a; if (o1 * o1 + o2 * o2 > m * m) cnt++; }
+    if (cnt < 1 || cnt > 8) continue;
+    return { q: '세 변의 길이가 ' + a + ', ' + b + ', ' + V('x') + '인 삼각형이 예각삼각형이 되도록 하는 자연수 ' + V('x') + '의 개수를 구하시오.', a: cnt + '개',
+      h: '삼각형이 되려면 ' + (b - a) + ' < ' + V('x') + ' < ' + (a + b) + '이고, 가장 긴 변의 제곱이 나머지 두 변의 제곱의 합보다 작아야 한다', p: { a, b, cnt } };
+  }
+  return retry('P-H5');
+});
+def('P-H6', 'P', 2, () => {
+  for (let i = 0; i < 400; i++) {
+    const ab = ri(2, 13), bc = ri(2, 13), cd = ri(2, 13), d2 = ab * ab + cd * cd - bc * bc;
+    if (!isSq(d2)) continue;
+    return { q: '사각형 ABCD에서 두 대각선 AC, BD가 서로 수직이다. AB = ' + ab + ', BC = ' + bc + ', CD = ' + cd + '일 때, DA의 길이를 구하시오.', a: String(Math.sqrt(d2)),
+      h: '대각선의 교점을 O라 하면 AB² + CD² = (AO² + BO²) + (CO² + DO²) = BC² + DA²', p: { ab, bc, cd, ans: Math.sqrt(d2) },
+      svg: fig({ pts: { A: [0.33, 2.2], B: [-2, 0.3], C: [-0.24, -1.6], D: [2.6, -0.39], O: [0, 0] }, polys: [['A', 'B', 'C', 'D']], segs: [['A', 'C'], ['B', 'D']], rights: [['O', 'A', 'D']], off: { O: [-10, -9] } }) };
+  }
+  return retry('P-H6');
+});
+
+/* ---------- B 확률 ---------- */
+const ways2 = (s) => { let n = 0; for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a + b === s) n++; return n; };
+const frS = (n, d) => fmt(F(n, d));
+const Cn = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); };
+const Pn = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r *= n - i; return r; };
+def('B-E1', 'B', 0, () => {
+  const s1 = ri(2, 12); let s2 = ri(2, 12); while (s2 === s1) s2 = ri(2, 12);
+  const n = ways2(s1) + ways2(s2);
+  return { q: '서로 다른 두 개의 주사위를 동시에 던질 때, 나오는 눈의 합이 ' + s1 + ' 또는 ' + s2 + '인 경우의 수를 구하시오.', a: n + '가지', h: '합의 법칙: 눈의 합이 ' + s1 + '인 경우 ' + ways2(s1) + '가지, ' + s2 + '인 경우 ' + ways2(s2) + '가지', p: { s1, s2, ans: n } };
+});
+def('B-E2', 'B', 0, () => {
+  const n = ri(2, 6), m = ri(2, 6), l = pick([0, 0, ri(2, 4)]);
+  return { q: '티셔츠 ' + n + '벌, 바지 ' + m + '벌' + (l ? ', 모자 ' + l + '개' : '') + '가 있을 때, ' + (l ? '티셔츠, 바지, 모자를 하나씩 골라 입는' : '티셔츠와 바지를 하나씩 골라 입는') + ' 방법은 모두 몇 가지인지 구하시오.', a: (n * m * (l || 1)) + '가지', h: '곱의 법칙', p: { n, m, l, ans: n * m * (l || 1) } };
+});
+def('B-E3', 'B', 0, () => {
+  const r = ri(1, 7), b = ri(1, 7), y = ri(1, 6), c = pick(['빨간', '파란', '노란']), cnt = { '빨간': r, '파란': b, '노란': y }[c], tot = r + b + y;
+  return { q: '주머니 속에 빨간 구슬 ' + r + '개, 파란 구슬 ' + b + '개, 노란 구슬 ' + y + '개가 들어 있다. 이 주머니에서 구슬 한 개를 꺼낼 때, ' + c + ' 구슬이 나올 확률을 구하시오.', a: frS(cnt, tot), h: '(확률) = (해당 경우의 수) / (전체 경우의 수)', p: { r, b, y, c, n: cnt, d: tot } };
+});
+def('B-E4', 'B', 0, () => {
+  const n = ri(4, 8), k = pick([2, 3]);
+  return { q: n + '명의 학생 중에서 ' + k + '명을 뽑아 한 줄로 세우는 경우의 수를 구하시오.', a: Pn(n, k) + '가지', h: n + ' × ' + (n - 1) + (k === 3 ? ' × ' + (n - 2) : ''), p: { n, k, ans: Pn(n, k) } };
+});
+def('B-E5', 'B', 0, () => {
+  const n = ri(4, 8);
+  return { q: '0, 1, 2, …, ' + n + '의 숫자가 각각 하나씩 적힌 ' + (n + 1) + '장의 카드 중에서 2장을 뽑아 만들 수 있는 두 자리 자연수는 모두 몇 개인지 구하시오.', a: n * n + '개', h: '십의 자리에는 0이 올 수 없다: ' + n + ' × ' + n, p: { n, ans: n * n } };
+});
+def('B-E6', 'B', 0, () => {
+  const n = ri(5, 10), k = pick([2, 2, 3]);
+  return { q: n + '명의 학생 중에서 대표 ' + k + '명을 뽑는 경우의 수를 구하시오.', a: Cn(n, k) + '가지', h: '순서를 생각하지 않고 ' + k + '명을 뽑는 경우의 수', p: { n, k, ans: Cn(n, k) } };
+});
+def('B-E7', 'B', 0, () => {
+  const n = ri(2, 5);
+  return { q: '동전 ' + n + '개를 동시에 던질 때, 적어도 한 개는 앞면이 나올 확률을 구하시오.', a: frS(Math.pow(2, n) - 1, Math.pow(2, n)), h: '(적어도 한 개는 앞면) = 1 − (모두 뒷면)', p: { n, nn: Math.pow(2, n) - 1, dd: Math.pow(2, n) } };
+});
+def('B-E8', 'B', 0, () => {
+  const s = ri(3, 11), w = ways2(s);
+  return { q: '서로 다른 두 개의 주사위를 동시에 던질 때, 나오는 눈의 합이 ' + s + '일 확률을 구하시오.', a: frS(w, 36), h: '전체 경우의 수는 36가지, 합이 ' + s + '인 경우는 ' + w + '가지', p: { s, w } };
+});
+def('B-M1', 'B', 1, () => {
+  const n = ri(4, 6), ans = 2 * [1, 1, 2, 6, 24, 120, 720][n - 1];
+  return { q: 'A, B를 포함한 ' + n + '명이 한 줄로 설 때, A와 B가 이웃하여 서는 경우의 수를 구하시오.', a: ans + '가지', h: 'A, B를 한 묶음으로 보면 ' + (n - 1) + '명을 세우는 경우의 수 × 2', p: { n, ans } };
+});
+def('B-M2', 'B', 1, () => {
+  const n = ri(5, 8), e = Math.floor(n / 2), ans = e * (n - 1) * (n - 2);
+  return { q: '1부터 ' + n + '까지의 숫자가 각각 하나씩 적힌 ' + n + '장의 카드 중에서 3장을 뽑아 세 자리 자연수를 만들 때, 짝수는 모두 몇 개인지 구하시오.', a: ans + '개', h: '일의 자리에 올 수 있는 짝수의 개수 × 나머지 자리에 ' + (n - 1) + ' × ' + (n - 2), p: { n, ans } };
+});
+def('B-M3', 'B', 1, () => {
+  const r = ri(1, 6), b = ri(1, 6), n = r + b, c = pick(['빨간', '파란']), k = c === '빨간' ? r : b;
+  return { q: '주머니 속에 빨간 공 ' + r + '개, 파란 공 ' + b + '개가 들어 있다. 공 한 개를 꺼내 색을 확인하고 다시 넣은 후 또 한 개를 꺼낼 때, 두 번 모두 ' + c + ' 공이 나올 확률을 구하시오.', a: frS(k * k, n * n), h: '꺼낸 공을 다시 넣으므로 두 사건은 서로 영향을 주지 않는다. 확률의 곱', p: { r, b, c, k, n } };
+});
+def('B-M4', 'B', 1, () => {
+  const r = ri(2, 6), b = ri(2, 6), n = r + b;
+  return { q: '주머니 속에 빨간 공 ' + r + '개, 파란 공 ' + b + '개가 들어 있다. 공 한 개를 꺼내 확인하지 않고 또 한 개를 꺼낼 때, 두 공의 색이 같을 확률을 구하시오.', a: fmt(F(r * (r - 1) + b * (b - 1), n * (n - 1))), h: '(모두 빨간 공) + (모두 파란 공), 꺼낸 공은 다시 넣지 않는다', p: { r, b, n: r * (r - 1) + b * (b - 1), d: n * (n - 1) } };
+});
+def('B-M5', 'B', 1, () => {
+  const [p1, q1] = pick([[1, 2], [1, 3], [2, 3], [3, 4], [1, 4], [2, 5], [3, 5]]), [p2, q2] = pick([[1, 2], [1, 3], [2, 3], [3, 4], [1, 5], [2, 5], [4, 5]]);
+  const miss = F(q1 - p1, q1).mul(F(q2 - p2, q2)), ans = F(1).sub(miss);
+  return { q: 'A가 문제를 맞힐 확률은 ' + fracHtml(p1, q1) + ', B가 문제를 맞힐 확률은 ' + fracHtml(p2, q2) + '이다. A, B 두 사람이 각각 한 번씩 풀 때, 적어도 한 사람은 맞힐 확률을 구하시오.', a: fmt(ans), h: '1 − (두 사람 모두 못 맞힐 확률)', p: { p1, q1, p2, q2, n: ans.n, d: ans.d } };
+});
+def('B-M6', 'B', 1, () => {
+  for (let i = 0; i < 300; i++) {
+    const p = ri(1, 3), q = ri(4, 15); let cnt = 0;
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a * p + b === q) cnt++;
+    if (cnt < 2 || cnt > 5) continue;
+    return { q: '서로 다른 두 개의 주사위를 동시에 던져 나온 눈의 수를 각각 ' + V('a') + ', ' + V('b') + '라 할 때, 직선 ' + V('y') + ' = ' + V('a') + V('x') + ' + ' + V('b') + '가 점 (' + p + ', ' + q + ')를 지날 확률을 구하시오.', a: frS(cnt, 36), h: p + V('a') + ' + ' + V('b') + ' = ' + q + '을 만족하는 순서쌍 (' + V('a') + ', ' + V('b') + ')의 개수를 센다', p: { p, q, cnt } };
+  }
+  return retry('B-M6');
+});
+def('B-M7', 'B', 1, () => {
+  for (let i = 0; i < 300; i++) {
+    const k = ri(5, 12), c0 = pick([1, 2]); let cnt = 0;
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (c0 * a + b <= k) cnt++;
+    if (cnt < 4 || cnt > 30) continue;
+    return { q: '서로 다른 두 개의 주사위를 동시에 던져 나온 눈의 수를 각각 ' + V('a') + ', ' + V('b') + '라 할 때, ' + (c0 === 1 ? '' : c0) + V('a') + ' + ' + V('b') + ' ≤ ' + k + '일 확률을 구하시오.', a: frS(cnt, 36), h: '조건을 만족하는 순서쌍 (' + V('a') + ', ' + V('b') + ')의 개수를 센다', p: { c0, k, cnt } };
+  }
+  return retry('B-M7');
+});
+def('B-M8', 'B', 1, () => {
+  const m = ri(3, 6), w = ri(2, 5), n = m + w, bad = Cn(m, 2), tot = Cn(n, 2);
+  return { q: '남학생 ' + m + '명, 여학생 ' + w + '명 중에서 대표 2명을 뽑을 때, 적어도 한 명은 여학생일 확률을 구하시오.', a: frS(tot - bad, tot), h: '1 − (2명 모두 남학생일 확률)', p: { m, w, n: tot - bad, d: tot } };
+});
+def('B-M9', 'B', 1, () => {
+  const a = ri(2, 4), b = ri(2, 4), c = ri(1, 3);
+  return { q: 'A 지점에서 B 지점으로 가는 길이 ' + a + '가지, B 지점에서 C 지점으로 가는 길이 ' + b + '가지 있고, A 지점에서 C 지점으로 바로 가는 길이 ' + c + '가지 있다. A 지점에서 C 지점까지 가는 방법은 모두 몇 가지인지 구하시오. (같은 지점은 한 번만 지난다.)', a: (a * b + c) + '가지', h: 'B를 거쳐 가는 경우 (곱의 법칙) + 바로 가는 경우 (합의 법칙)', p: { a, b, c, ans: a * b + c } };
+});
+def('B-H1', 'B', 2, () => {
+  const n = ri(6, 9), k = ri(3, 5), ans = Cn(n, 3) - Cn(k, 3);
+  return { q: '한 평면 위에 ' + n + '개의 점이 있다. 이 중 ' + k + '개의 점은 한 직선 위에 있고 나머지 어느 세 점도 한 직선 위에 있지 않을 때, 세 점을 이어 만들 수 있는 삼각형의 개수를 구하시오.', a: ans + '개', h: '(' + n + '개 중 3개를 뽑는 경우의 수) − (일직선 위의 ' + k + '개 중 3개를 뽑는 경우의 수)', p: { n, k, ans } };
+});
+def('B-H2', 'B', 2, () => {
+  for (let i = 0; i < 300; i++) {
+    const q = pick([2, 3, 4, 6]), pp = ri(1, 4), r = ri(2, 12); let cnt = 0;
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a * b === q && r !== pp * b) cnt++;
+    if (cnt < 1) continue;
+    return { q: '서로 다른 두 개의 주사위를 동시에 던져 나온 눈의 수를 각각 ' + V('a') + ', ' + V('b') + '라 할 때, 연립방정식 ' + sysH(V('a') + V('x') + ' + ' + V('y') + ' = ' + pp, q + V('x') + ' + ' + V('b') + V('y') + ' = ' + r) + '의 해가 존재하지 않을 확률을 구하시오.', a: frS(cnt, 36),
+      h: V('a') + V('b') + ' = ' + q + '이면 두 직선은 평행하거나 일치한다. 일치하는 경우(상수항의 비도 같은 경우)는 제외한다', p: { q, pp, r, cnt } };
+  }
+  return retry('B-H2');
+});
+def('B-H3', 'B', 2, () => {
+  const r1 = ri(1, 5), b1 = ri(1, 5), r2 = ri(1, 5), b2 = ri(1, 5), n1 = r1 + b1, n2 = r2 + b2, nu = r1 * r2 + b1 * b2, de = n1 * n2;
+  return { q: 'A 상자에는 빨간 공 ' + r1 + '개, 파란 공 ' + b1 + '개가 있고, B 상자에는 빨간 공 ' + r2 + '개, 파란 공 ' + b2 + '개가 있다. 두 상자에서 공을 한 개씩 꺼낼 때, 두 공의 색이 같을 확률을 구하시오.', a: frS(nu, de), h: '(둘 다 빨간 공) + (둘 다 파란 공)', p: { r1, b1, r2, b2, n: nu, d: de } };
+});
+def('B-H4', 'B', 2, () => {
+  const m = ri(3, 5), ans = 2 * [1, 1, 2, 6, 24, 120][m];
+  return { q: '남학생 ' + m + '명과 여학생 2명이 한 줄로 설 때, 여학생 2명이 양 끝에 서는 경우의 수를 구하시오.', a: ans + '가지', h: '양 끝에 여학생 2명이 서는 경우 2가지 × 가운데 남학생 ' + m + '명이 서는 경우', p: { m, ans } };
+});
+
+BANK.find((x) => x.id === 'P-E7').noMC = 1;
+
+/* ===== 중2 확장 단원 오답 보기 ===== */
+/* 숫자(정수·분수)+단위 꼴의 정답에서, 값만 바꾼 오답을 같은 모양으로 만든다 */
+function _n(o, vals, opt) {
+  opt = opt || {};
+  const a = String(o.a);
+  let m = /^(−?)(\d+)([^]*)$/.exec(a), cur, suf;
+  if (m) { cur = F(+m[2] * (m[1] ? -1 : 1)); suf = m[3]; }
+  else { m = /^(−?)<span class="fr"><i>(\d+)<\/i><i>(\d+)<\/i><\/span>([^]*)$/.exec(a); if (!m) return []; cur = F(+m[2] * (m[1] ? -1 : 1), +m[3]); suf = m[4]; }
+  const frac = cur.d > 1, lo = opt.min !== undefined ? opt.min : (cur.n > 0 ? (frac ? 1e-9 : 1) : cur.n < 0 ? -1e9 : 0), hi = opt.max !== undefined ? opt.max : (frac && cur.val() < 1 ? 0.9999 : 1e9), out = [];
+  vals.forEach((v) => {
+    if (v === null || v === undefined) return;
+    let f;
+    if (v instanceof Fr) f = v; else { if (!isFinite(v)) return; f = Number.isInteger(v) ? F(v) : F(Math.round(v * 60), 60); }
+    if ((!frac && f.d !== 1) || f.d > 500 || Math.abs(f.n) > 100000 || f.eq(cur) || f.val() < lo || f.val() > hi) return;
+    out.push(fmt(f) + suf);
+  });
+  return out;
+}
+const _deg = (o, vals) => _n(o, vals, { min: 1, max: 179 });
+const _fact = (n) => (n <= 1 ? 1 : n * _fact(n - 1));
+const _cnt = (ok, lo, hi) => { let c = 0; for (let i = lo; i <= hi; i++) if (ok(i)) c++; return c; };
+const _pm = (A) => {   // 다항식(맵)의 항 하나를 틀리게 한 오답들
+  const out = [], keys = Object.keys(A).filter((k) => !A[k].isZero());
+  keys.forEach((k) => {
+    const [a, b] = k.split(',').map(Number);
+    const cp = () => Object.assign({}, A);
+    let m = cp(); m[k] = A[k].neg(); out.push(PLX.str(m));
+    m = cp(); m[k] = A[k].add(A[k].n > 0 ? 1 : -1); out.push(PLX.str(m));
+    m = cp(); delete m[k]; m[(a + 1) + ',' + b] = (m[(a + 1) + ',' + b] || F(0)).add(A[k]); out.push(PLX.str(m));
+    if (a > 0) { m = cp(); delete m[k]; m[(a - 1) + ',' + b] = (m[(a - 1) + ',' + b] || F(0)).add(A[k]); out.push(PLX.str(m)); }
+    m = cp(); delete m[k]; m[a + ',' + (b + 1)] = (m[a + ',' + (b + 1)] || F(0)).add(A[k]); out.push(PLX.str(m));
+  });
+  return out;
+};
+const _q3 = (A) => PLX.str(PLX.mk(A.map((c, i) => [c, 2 - i, 0])));
+const _ineqD = (o, val, ops) => ops.map((op) => ineq('x', op, val));
+
+/* ---------- N 유리수와 순환소수 ---------- */
+DIST['N-E1'] = (p, o) => _n(o, [p.D, +o.a * 2, +o.a * 5, +o.a + 3, +o.a * 3, +o.a + 7]);
+DIST['N-E2'] = (p, o) => { const { ip, block } = p, den = String(block).length === 1 ? 9 : 99, b = +block;
+  return [F(ip).add(F(b, den + 1)), F(ip).add(F(b, den === 9 ? 99 : 9)), F(ip).add(F(b, den * 10)), F(ip + 1).add(F(b, den)), F(ip).add(F(b + 1, den)), F(ip).add(F(b, den - 1))].map((f) => fmt(f)); };
+DIST['N-E3'] = (p, o) => { const { n, d, k } = p, dg = (x) => digitAt(n, d, x); return _n(o, [dg(k + 1), dg(k - 1), dg(k + 2), dg(k - 2), dg(k + 3), (+o.a + 1) % 10, (+o.a + 9) % 10, dg(1), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { min: 0, max: 9 }); };
+DIST['N-E4'] = (p, o) => _n(o, [p.c + 1, p.c - 1, p.c + 2, p.c - 2, p.c + 3, p.hi - p.lo]);
+DIST['N-M1'] = (p) => { const { pre, rep } = p, bc = +rep; return [F(pre, 10).add(F(bc, 99)), F(pre, 10).add(F(bc, 100)), F(pre * 100 + bc, 990), F(pre * 100 + bc - pre, 999), F(pre, 10).add(F(bc, 9900)), F(pre * 100 + bc - pre, 900)].map(fmt); };
+DIST['N-M2'] = (p) => { const { a, bc } = p; return [F(a + bc, 99), F(a, 10).add(F(bc, 100)), F(a, 9).add(F(bc, 100)), F(a, 9).add(F(bc, 990)), F(a + bc, 108), F(a, 10).add(F(bc, 99))].map(fmt); };
+DIST['N-M3'] = (p, o) => { const e = decExp(p.n, p.d), rs = e.rep.split('').reduce((x, y) => x + +y, 0), s = p.s, dg = (x) => digitAt(p.n, p.d, x); return _n(o, [s + rs, s - rs, s + dg(p.k + 1), s - dg(p.k), s + 1, s - 1, s + dg(p.k + 1) + dg(p.k + 2)]); };
+DIST['N-M4'] = (p, o) => _n(o, [p.D, p.D / gcd(p.a, p.D), p.x * 2, p.x + 3, p.x * 3, p.x + 1, p.x - 1]);
+DIST['N-H1'] = (p, o) => { const cn = (M) => _cnt((n) => n % M === 0, 10, 99); return _n(o, [cn(p.ka * p.kb), cn(p.ka), cn(p.kb), Math.floor(99 / p.m), p.c + 1, p.c - 1, p.c + 2]); };
+DIST['N-H2'] = (p) => { const { a, bc } = p; return [F(11 * a, bc), F(bc, a), F(bc, 11 * a).mul(10), F(bc, 99).div(F(a, 10)), F(bc, 100).div(F(a, 10)), F(bc, 99).div(F(a, 9)).mul(10)].map(fmt); };
+DIST['N-H3'] = (p, o) => _n(o, [999 + p.abc, p.abc, p.n, p.d, p.d - p.n, +o.a + 1, +o.a - 1, 1000 + p.abc]);
+DIST['N-H4'] = (p, o) => { const e = decExp(p.n, p.d), rs = e.rep.split('').reduce((x, y) => x + +y, 0), s = p.s, dg = (x) => digitAt(p.n, p.d, x); return _n(o, [s + rs, s - rs, s + dg(p.k + 1), s - dg(p.k), s + 1, s - 1, s + rs - dg(p.k)]); };
+
+/* ---------- E 식의 계산 ---------- */
+DIST['E-E1'] = (p, o) => _n(o, [p.a + p.b + p.c - p.d, p.a * p.b + p.c + p.d, p.a * p.b * p.c - p.d, p.res + 1, p.res - 1, p.a * p.b * (p.c - p.d), p.a * p.b - p.c + p.d]);
+DIST['E-E2'] = (p) => { const { pp, qq, a, b, c, d } = p, t = (cf, e1, e2) => PLX.str(PLX.mk([[cf, e1, e2]])), co = p.coef;
+  return [t(pp * qq, a + 2 * c, b + 2 * d), t(2 * pp * qq, a + 2 * c, b + 2 * d), t(-co, a + 2 * c, b + 2 * d), t(co, a + c + 2, b + d + 2), t(co, a + c, b + d), t(co, a + 2 * c, b + d), t(co, a + c * c, b + d * d), t(pp * qq * qq * 2, a + 2 * c, b + 2 * d)]; };
+DIST['E-E3'] = (p) => { const { A, B, s } = p, out = [];
+  for (let i = 0; i < 3; i++) out.push(_q3(A.map((x, j) => x + (j === i ? -s : s) * B[j])));
+  out.push(_q3(A.map((x, j) => x - s * B[j])));
+  out.push(_q3(A.map((x, j) => (j === 2 ? x + s * B[j] : x + s * B[j] + (j === 0 ? 1 : 0)))));
+  return out; };
+DIST['E-E4'] = (p, o) => { const { x0: x, y0: y, P, a, Q, b, c, d, e, f } = p, v = p.val;
+  return _n(o, [P * (x + a * y) - Q * b * x - c * y + e * (d * x - f * y), P * (x + a * y) - Q * (b * x + c * y) - e * (d * x - f * y), P * (x + a * y) - Q * (b * x - c * y) + e * (d * x - f * y), P * (x + a * y) - Q * (b * x + c * y) + e * (d * x + f * y), P * x + a * y - Q * (b * x + c * y) + e * (d * x - f * y), v + 2, v - 2, -v], { min: -1e9 }); };
+DIST['E-E5'] = (p) => { const { m, k, which } = p;
+  if (which === 'y') return [lineEq(m.neg(), k), lineEq(m, k.neg()), lineEq(m.neg(), k.neg()), lineEq(F(m.val() === 0 ? 1 : 1).div(m), k), lineEq(m.mul(p.b), k.mul(p.b)), lineEq(m, k.mul(p.b)), lineEq(m.add(1), k), lineEq(m, k.add(1))];
+  return [V('x') + ' = ' + ex(m.neg(), k, 'y'), V('x') + ' = ' + ex(m, k.neg(), 'y'), V('x') + ' = ' + ex(m.neg(), k.neg(), 'y'), V('x') + ' = ' + ex(m.mul(p.a), k.mul(p.a), 'y'), V('x') + ' = ' + ex(m, k.mul(p.a), 'y'), V('x') + ' = ' + ex(m.add(1), k, 'y'), V('x') + ' = ' + ex(m, k.add(1), 'y')]; };
+DIST['E-M1'] = (p) => { const { coef, ea, eb, P, a, b, Q, c, d, R, e, f } = p, t = (cf, e1, e2) => PLX.str(PLX.mk([[F(cf), e1, e2]]));
+  return [t(coef.neg(), ea, eb), t(F(P * Q * R), ea, eb), t(coef, a - c - e, b - d - f), t(coef, a + c + e, b + d + f), t(coef, a - c + e, b - d), t(F(P * R, 1).div(F(Q, 1)).mul(2), ea, eb), t(F(P, Q * R), ea, eb), t(coef, a - c * e, b - d * f)].filter((s) => s.indexOf('NaN') < 0); };
+DIST['E-M2'] = (p) => { const { A, B, k } = p; return [A.map((x, i) => x - k * B[i] - k * x), A.map((x, i) => x - k * B[i]), A.map((x, i) => x + k * B[i] - k * x), A.map((x, i) => x + k * B[i] + k * x), A.map((x, i) => x - k * (B[i] - x) + 1 * (i === 0))].map(_q3); };
+DIST['E-M3'] = (p, o) => { const A = p.A, s = p.sum; return _n(o, [A[0] + A[1], A[0] + A[2], A[1] + A[2], A[0] + A[1] + A[2], s + 1, s - 1, s + 2, -s], { min: -1e9 }); };
+DIST['E-M4'] = (p, o) => _n(o, [p.dg + 1, p.dg - 1, p.dg + 2, p.dg - 2, p.a + p.b, p.dg + 3, p.b]);
+DIST['E-M5'] = (p) => { const { m, n, r, s, p: pp, q } = p, L = (u, v) => PLX.str(PLX.mk([[u, 1], [v, 0]]), 'a');
+  return [L(pp * m + q * r, pp * n + q * s), L(pp * m - q * r, pp * n + q * s), L(pp * m - q * r, pp * n - s), L(pp * m - r, pp * n - s), L(pp * m - q * r, pp * n - q * s + 1), L(-pp * m + q * r, -pp * n + q * s), L(pp * m - q * r + 1, pp * n - q * s)]; };
+DIST['E-H1'] = (p) => _pm(p.ans);
+DIST['E-H2'] = (p) => { const { W, Bp } = p, ans = p.ans; return [PLX.add(W, Bp), PLX.add(W, Bp, -1), PLX.add(W, PLX.scale(Bp, 3)), PLX.add(W, PLX.scale(Bp, 2), -1), PLX.add(W, PLX.scale(Bp, -2))].map((m) => PLX.str(m)).concat(_pm(ans).slice(0, 3)); };
+DIST['E-H3'] = (p) => { const { c3, m, n } = p; return _pm(PLX.mk([[c3, m, n]])).concat([PLX.str(PLX.mk([[c3.mul(2), m, n]])), PLX.str(PLX.mk([[c3.div(2), m, n]]))]); };
+DIST['E-H4'] = (p, o) => _n(o, [p.dg + 1, p.dg - 1, p.dg + 2, p.dg - 2, p.c + p.e3, p.c + 1, p.dg + 3]);
+DIST['E-H5'] = (p, o) => _n(o, [p.N, p.x + 1, p.x - 1, p.N - p.k, p.N - p.m - 2, p.x + 2, p.N / p.k]);
+
+/* ---------- I 일차부등식 ---------- */
+DIST['I-E1'] = (p) => { const v = p.val, o = p.o, f = flipOp[o], st = { '<': '≤', '>': '≥', '≤': '<', '≥': '>' }[o];
+  return [ineq('x', f, v), ineq('x', o, v.neg()), ineq('x', f, v.neg()), ineq('x', st, v), ineq('x', o, v.add(1)), ineq('x', o, v.sub(1)), ineq('x', f, v.add(1))]; };
+DIST['I-E2'] = (p, o) => _n(o, [p.cnt + 1, p.cnt - 1, p.cnt + 2, p.cnt - 2, p.cnt + 3, p.cnt * 2]);
+DIST['I-E3'] = (p, o) => _n(o, [-p.a, p.a + 1, p.a - 1, p.a - 2, p.a + 2, -p.a + 1, -p.a - 1, p.k], { min: -1e9 });
+DIST['I-E4'] = (p) => { const v = p.val, o = p.o, f = flipOp[o], st = { '<': '≤', '>': '≥', '≤': '<', '≥': '>' }[o];
+  return [ineq('x', f, v), ineq('x', o, v.neg()), ineq('x', f, v.neg()), ineq('x', st, v), ineq('x', o, v.add(1)), ineq('x', o, v.sub(1))]; };
+DIST['I-M1'] = (p, o) => _n(o, [p.a + 1, p.a - 1, p.a + 2, p.a - 2, p.k, p.a * 2, p.a + p.k]);
+DIST['I-M2'] = (p, o) => { const { c, d, N, n, un } = p; return _n(o, [n + 1, n - 1, n + 2, Math.floor(N / c), Math.floor((N + d) / c), n - 2, Math.floor((N - d) / c) + 1]); };
+DIST['I-M3'] = (p, o) => _n(o, [p.m + 1, p.m - 1, p.m + 2, p.m - 2, p.m + 3, Math.floor(p.N / p.k), Math.ceil(p.N / p.k)]);
+DIST['I-M4'] = (p, o) => _n(o, [p.x + 1, p.x - 1, p.x * 2, p.x + p.a, p.x - p.a, p.T * p.a, p.T * p.b, Math.floor(p.x / 2)]);
+DIST['I-H1'] = (p) => { const { lo, hi } = p, a = V('a'), r = (l, h, s1, s2) => num(l) + ' ' + s1 + ' ' + a + ' ' + s2 + ' ' + num(h), out = [];
+  [[0, ['≤<', '<<', '≤≤']], [-p.k, ['<≤', '≤<', '<<', '≤≤']], [p.b, ['<≤', '≤<', '<<']], [p.k, ['<≤', '≤≤']], [-2 * p.k, ['<≤', '≤<']], [-p.b, ['<≤', '≤<']]].forEach(([s, ops]) => ops.forEach((o) => out.push(r(lo + s, hi + s, o[0], o[1]))));
+  return out; };
+DIST['I-H2'] = (p) => { const a = V('a'), b = V('b'), q = p.q, pp = p.p, c = { '≤': ' > ', '<': ' ≥ ', '≥': ' < ', '>': ' ≤ ' }[p.op], o2 = { '≤': ' ≥ ', '<': ' ≤ ', '≥': ' ≤ ', '>': ' ≥ ' }[p.op];
+  return [a + ' = ' + num(pp) + ', ' + b + o2 + num(q), a + ' = ' + num(-pp) + ', ' + b + c + num(q), a + ' = ' + num(pp) + ', ' + b + c + num(-q), a + ' = ' + num(pp) + ', ' + b + ' = ' + num(q), a + ' ≠ ' + num(pp) + ', ' + b + c + num(q), a + ' = ' + num(pp + 1) + ', ' + b + c + num(q), a + ' = ' + num(pp) + ', ' + b + o2 + num(-q)]; };
+DIST['I-H3'] = (p, o) => _n(o, [p.pp - p.r, p.x + 5, p.x - 5, Math.floor(100 * (p.pp - p.r) / p.pp), p.x + 2, p.x - 2, p.pp + p.r]);
+DIST['I-H4'] = (p, o) => { const mx = p.cnt; return _n(o, [p.sum + mx + 1, p.sum - mx, p.sum + 1, p.sum - 1, p.sum - 1 * 1 - mx, (mx * (mx + 1)) / 2 + 1, p.sum + 2 * mx + 3]); };
+
+/* ---------- Q 연립방정식 ---------- */
+const _xy = (x, y) => [xyAns(y, x), xyAns(-x, y), xyAns(x, -y), xyAns(-x, -y), xyAns(x + 1, y), xyAns(x, y + 1), xyAns(x - 1, y), xyAns(x, y - 1), xyAns(x + 2, y - 1)];
+DIST['Q-E1'] = (p) => _xy(p.x0, p.y0);
+DIST['Q-M1'] = (p) => _xy(p.x0, p.y0);
+DIST['Q-H2'] = (p) => _xy(p.x0, p.y0);
+DIST['Q-E2'] = (p) => { const s = (a, b) => V('a') + ' = ' + num(a) + ', ' + V('b') + ' = ' + num(b); return [s(p.b, p.a), s(-p.a, p.b), s(p.a, -p.b), s(-p.a, -p.b), s(p.a + 1, p.b), s(p.a, p.b + 1), s(p.a - 1, p.b - 1)]; };
+DIST['Q-M2'] = (p, o) => _n(o, [p.a - p.b, p.a * p.b, p.a + p.b + 1, p.a + p.b - 1, -(p.a + p.b), p.a + p.b + 2, p.a + p.b - 2], { min: -1e9 });
+DIST['Q-E3'] = (p, o) => _n(o, [p.B, p.s, p.S / 2, p.D / 2, p.B + 1, p.s - 1, p.B - 1, p.s + 1, p.S - p.D]);
+DIST['Q-E4'] = (p, o) => { const a = p.ask ? p.y : p.x, ot = p.ask ? p.x : p.y; return _n(o, [ot, a + 1, a - 1, a + 2, a - 2, 2 * a, p.x + p.y]); };
+DIST['Q-E5'] = (p, o) => { const a = p.ask ? p.qq : p.pp, ot = p.ask ? p.pp : p.qq; return _n(o, [ot, a + 100, a - 100, a + 200, a - 200, a * 2, p.A / (p.m1 + p.n1)]); };
+DIST['Q-M3'] = (p, o) => { const a = p.a * p.u, ot = p.b * p.v; return _n(o, [ot, a + p.a, a - p.a, a + 1, p.d - a + p.a, a * 2]); };
+DIST['Q-M4'] = (p, o) => _n(o, [p.tot - p.x, p.x + 100, p.x - 100, p.x + 50, p.x - 50, p.x + 200]);
+DIST['Q-M5'] = (p, o) => _n(o, [10 * p.q + p.p, p.N + 9, p.N - 9, p.N + 18, p.N - 18, p.N + 11, p.N - 11]);
+DIST['Q-H1'] = (p) => { const a = V('a'), b = V('b'), k = p.k, pp = p.p, r = p.r, out = [];
+  const A = [['=', k * pp], ['=', pp], ['=', -k * pp], ['≠', k * pp], ['=', k * pp + 1], ['=', 2 * pp]], B = [['≠', k * r], ['=', k * r], ['≠', r], ['≠', -k * r], ['≠', k * r + 1], ['≠', 2 * r]];
+  A.forEach((x, i) => B.forEach((y, j) => { if (i === 0 && j === 0) return; out.push(a + ' ' + x[0] + ' ' + num(x[1]) + ', ' + b + ' ' + y[0] + ' ' + num(y[1])); }));
+  return out; };
+DIST['Q-H3'] = (p, o) => { const ans = p.ask ? p.b : p.a, ot = p.ask ? p.a : p.b; return _n(o, [ot, p.a + p.b, p.t, ans + 1, ans - 1, 2 * p.t, ans + 2, ans * 2]); };
+DIST['Q-H4'] = (p, o) => { const nb = p.x + (p.p * p.x) / 100; return _n(o, [p.x, p.x - (p.p * p.x) / 100, p.y, nb + 20, nb - 20, nb + 40, p.y - (p.q * p.y) / 100, nb + (p.dd > 0 ? p.dd : -p.dd)]); };
+DIST['Q-H5'] = (p, o) => { const ans = p.ask ? p.b * p.k : p.a * p.k, ot = p.ask ? p.a * p.k : p.b * p.k; return _n(o, [ot, p.a, p.b, ans + p.k, ans - p.k, p.k, ans + 1, ans * 2]); };
+
+/* ---------- T 삼각형의 성질 ---------- */
+DIST['T-E1'] = (p, o) => _deg(o, [p.a / 2, 180 - p.a, p.a, p.ans + 10, p.ans - 10, 90 - p.a, 2 * p.ans]);
+DIST['T-E2'] = (p, o) => _deg(o, p.ask ? [180 - p.b, 2 * p.b, p.b, 90 - p.b, 180 - 3 * p.b, 360 - 2 * p.b, 180 - p.b / 2] : [p.b, 180 - 2 * p.b, 2 * p.b, 90 - p.b, 180 - p.b / 2, 90 + p.b, 360 - p.b]);
+DIST['T-E3'] = (p, o) => (p.t === 0 ? _deg(o, [p.x, 180 - 2 * p.x, 90 + p.x, 90 - 2 * p.x, 180 - p.x, 2 * p.x, 45]) : _n(o, [2 * p.m, p.m + 1, p.m - 1, 4 * p.m, p.m + 2, p.m * 2 + 1, p.m / 2]));
+DIST['T-E4'] = (p, o) => _deg(o, p.ask ? [2 * p.a, 4 * p.a, 180 - p.a, 90 - p.a, 180 - 2 * p.a, p.a / 2, 90 + p.a] : [p.a, 180 - 2 * p.a, 90 - p.a, 180 - p.a, 90 + p.a, 4 * p.a, 180 - p.a / 2]);
+DIST['T-E5'] = (p, o) => { const { a, c } = p; return _deg(o, p.ask ? [c - 90, 180 - c, c, 2 * (180 - c), a + 10, 2 * c - 180 + 10, 360 - 2 * c] : [a / 2, 90 + a, 180 - a / 2, 90 - a / 2, 2 * a, a, 180 - a]); };
+DIST['T-E6'] = (p, o) => (p.ask ? _n(o, [p.c, p.c / 2 + 1, p.c / 2 - 1, p.a, p.b, p.c / 2 + 2, p.c / 2 + 3]) : _n(o, [p.r, 2 * p.r + 1, 2 * p.r - 1, 4 * p.r, 3 * p.r, p.r * p.r, 2 * p.r + 2]));
+DIST['T-E7'] = (p, o) => _n(o, [p.r + 1, p.r - 1, p.r * 2, p.r + 2, p.S / p.L, p.L / 2 - p.r, p.r + 3]);
+DIST['T-E8'] = (p, o) => _n(o, [p.x0, p.p1 * p.x0, p.ans + p.q1, p.ans - p.q1, p.ans + 1, p.ans - 1, p.r1 * p.x0 + p.s, p.ans + 2]);
+DIST['T-M1'] = (p, o) => _deg(o, [p.c, 180 - p.c, p.d, 180 - p.d, p.ans + 10, p.ans - 10, 180 - 3 * p.c + 180, p.d / 3, 2 * p.ans]);
+DIST['T-M2'] = (p, o) => _deg(o, [p.b, 180 - 2 * p.b, 90 + p.b, 180 - p.b, 2 * p.b, 90 - 2 * p.b, 45 - p.b / 2]);
+DIST['T-M3'] = (p, o) => _deg(o, [180 - p.b - p.c, 90 - p.b - p.c, 2 * (p.b + p.c), p.ans + 10, p.ans - 10, 90 + p.b + p.c, 180 - 2 * p.b]);
+DIST['T-M4'] = (p, o) => { const s2 = 90 - p.ans; return _deg(o, [s2, 180 - s2, p.ans + 10, p.ans - 10, 2 * p.ans, 90 - p.ans + 15, 180 - 2 * s2]); };
+DIST['T-M5'] = (p, o) => _n(o, [p.u, p.v, p.w, p.ans + 1, p.ans - 1, (p.a + p.b + p.c) / 2, p.ans + 2]);
+DIST['T-M6'] = (p, o) => _n(o, [p.r + p.c, p.c - 2 * p.r, p.c + 4 * p.r, p.c + 3 * p.r, 2 * (p.r + p.c), p.c + p.r + 1, p.c + 2 * p.r + 2]);
+DIST['T-M7'] = (p, o) => _deg(o, [p.b, 180 - 2 * p.b, 90 - p.b, 90 + p.b, 180 - p.b, 90 - 2 * p.b, 2 * p.b + 10]);
+DIST['T-H1'] = (p, o) => { const a = p.a; return _deg(o, [2 * a, 90 + a / 2, 2 * a + a / 2, 180 - a, p.ans - 10, p.ans + 10, 2 * a + 90, 90 + a]).concat(_n(o, [2 * a + 90 + a, p.ans + 20, p.ans - 20], { min: 1, max: 1000 })); };
+DIST['T-H2'] = (p) => { const f = (s, rr) => s + ' − ' + rr + 'π (cm²)'; return [f(p.S, p.r), f(p.S, 2 * p.r), f(p.a * p.b, p.rr), f(p.S, p.rr + p.r), f(p.S, 2 * p.rr), f(p.S / 2, p.rr), f(p.S, p.rr + 1), f(p.S + p.rr, p.rr)]; };
+DIST['T-H3'] = (p) => { const { a, b } = p, f = (x, y) => x + ' cm 또는 ' + y + ' cm'; return [f(3 * a, 3 * b), f(2 * a + b, a + b), f(a + 2 * b, 2 * a + 2 * b), f(2 * a + b + 1, a + 2 * b), f(2 * a + b, a + 2 * b - 1), f(a + b, 2 * a + 2 * b), f(2 * a + b, 2 * b + 2 * a)]; };
+DIST['T-H4'] = (p, o) => { const { R, r, ans } = p; return _n(o, [r * (R + r), 2 * R * r, r * (4 * R + 2 * r), ans + r, ans - r, R * r * r, 2 * ans, ans + 2 * R]); };
+
+/* ---------- R 사각형의 성질 ---------- */
+DIST['R-E1'] = (p, o) => { const { m, n, ans } = p; return _deg(o, [180 * n / (m + n), 90 * m / (m + n), 360 * m / (m + n), ans + 10, ans - 10, 180 / (m + n) * m + 5, 180 - 2 * ans > 0 ? 180 - 2 * ans : 0]); };
+DIST['R-E2'] = (p, o) => _n(o, [p.x0, p.p * p.x0, p.s, p.ans + p.q, p.ans - p.q, p.ans + 1, p.ans - 1, p.r * p.x0]);
+DIST['R-E3'] = (p, o) => { const { ab, ac, bd } = p; return _n(o, [ab + ac + bd, ab + ac / 2, ab + bd / 2, ab + ac + bd / 2, ab + ac / 2 + bd, ab + (ac + bd) / 4, p.ans + 1]); };
+DIST['R-E4'] = (p, o) => _deg(o, [2 * p.x, 90 - p.x, 180 - p.x, p.x, 90 + p.x, 90 - 2 * p.x + 20, 180 - 2 * p.x + 10, 180 - 2 * p.x - 10]);
+DIST['R-E5'] = (p, o) => _deg(o, [p.a / 2, 180 - p.a, 90 - p.a, p.a, 90 + p.a / 2, p.ans + 10, p.ans - 10, 180 - p.a / 2]);
+DIST['R-E6'] = (p, o) => _n(o, [p.s, 2 * p.s, 8 * p.s, 4 * (p.p + p.q), 2 * (p.p + p.q), 4 * p.s + 4, 4 * p.s - 4, 4 * p.p]);
+DIST['R-E7'] = (p, o) => _deg(o, [p.b, 180 - 2 * p.b, 90 - p.b, 90 + p.b, 360 - 2 * p.b, 2 * p.b, 180 - p.b / 2]);
+DIST['R-E8'] = (p, o) => _n(o, [p.x0, p.y0, p.x0 * p.y0, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, 2 * p.ans]);
+DIST['R-M1'] = (p, o) => _n(o, [p.a, p.a + p.b, p.b, p.ans + 1, p.ans - 1, 2 * p.a - p.b, p.b - 2 * p.a, p.ans + 2]);
+DIST['R-M2'] = (p, o) => { const g = p.ask === '△PCD' ? p.u : p.t; return _n(o, [p.S / 2, p.S - g, p.S / 4, p.S / 2 + g, g, p.S / 4 - g, p.ans + 2, p.ans - 1]); };
+DIST['R-M3'] = (p, o) => _n(o, [p.d, p.d / 2, 4 * p.d, 3 * p.d, p.d * 2 + 2, p.d * p.d / 4, p.ans + 4]);
+DIST['R-M4'] = (p, o) => { const { a, d } = p; return _n(o, [4 * a + 2 * d, 2 * a + 2 * d, 2.5 * a + 2 * d, 3 * a + d, 2 * a + 3 * d, 3 * a + 2 * d + 2, 3 * a + 2 * d - 2]); };
+DIST['R-M5'] = (p, o) => _n(o, [p.d1 * p.d2, (p.d1 / 2) * (p.d2 / 2), p.side * p.d1 / 2, p.side * p.d1, p.side * p.side, p.d1 * p.d2 / 4 + p.side, p.ans + p.side]);
+DIST['R-M6'] = (p, o) => { const { ab, dc, a, b } = p; return _n(o, [ab + dc + b, ab + dc + a, ab + dc, ab + dc + (b - a) + 1, ab + dc + (b - a) - 1, ab + dc + b - a + 2, ab + dc + (b - a) * 2]); };
+DIST['R-H1'] = (p, o) => _n(o, [p.b - p.a, p.a, 3 * p.a - p.b, 2 * p.a, p.ans + 1, p.ans + 2, p.ans - 1, p.b]);
+DIST['R-H2'] = (p, o) => { const S = p.S; return _n(o, [S / 4, S / 3, S / 2, S / 6 + 1, S / 6 - 1, S / 12, S / 6 * 2, S / 8]); };
+DIST['R-H3'] = (p, o) => _deg(o, [p.x, 135 - p.x, 90 + p.x, 90 - p.x, 45 + p.x + 10, 45 + p.x - 10, 180 - p.x, 135 + p.x]);
+DIST['R-H4'] = (p, o) => { const ac = p.ans / 2; return _n(o, [ac, 4 * ac, 2 * ac + 2, 2 * ac - 2, 3 * ac, ac + p.x0, 2 * ac + 4]); };
+
+/* ---------- P 피타고라스 정리 ---------- */
+DIST['P-E1'] = (p, o) => { const ks = { AB: p.AB, AC: p.AC, BC: p.BC }, kn = ['AB', 'AC', 'BC'].filter((k) => k !== p.key).map((k) => ks[k]); return _n(o, [kn[0] + kn[1], Math.abs(kn[0] - kn[1]), p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, Math.max(...kn) + 1]); };
+DIST['P-E2'] = (p, o) => (p.t === 0
+  ? [p.a + sqrtH(3) + ' cm', sq2(2 * p.a) + ' cm', 2 * p.a + ' cm', p.a * p.a + ' cm', sqrtH(2 * p.a) + ' cm', sq2(p.a + 1) + ' cm', p.a + sqrtH(2 * p.a) + ' cm']
+  : _n(o, [p.w + p.h, p.w * p.h, p.ans + 1, Math.abs(p.w - p.h), p.ans - 1, p.ans + 2, p.ans - 2]));
+DIST['P-E3'] = (p) => (p.ask
+  ? [sq3(p.k) + ' cm²', sq3(2 * p.k * p.k) + ' cm²', sq3(4 * p.k * p.k) + ' cm²', sq3(3 * p.k * p.k) + ' cm²', sq2(p.k * p.k) + ' cm²', sq3(p.k * p.k + 1) + ' cm²', sq3(p.k * p.k * 2 + 1) + ' cm²']
+  : [sq3(p.a) + ' cm', sq3(p.k + 1) + ' cm', sq2(p.k) + ' cm', sq3(p.k * p.k) + ' cm', p.k + ' cm', sq3(p.a + 1) + ' cm', sq2(p.a) + ' cm']);
+DIST['P-E4'] = (p, o) => (p.ask ? _n(o, [p.a + p.b, p.a * p.b / 2, 2 * (p.a + p.b), p.a + p.b + 2 * p.c, p.ans + 2, p.ans - 2, p.ans + 4]) : _n(o, [p.a * p.b, p.a + p.b + p.c, p.a * p.b / 4, p.a * p.b / 2 + p.c, p.ans + 2, p.ans - 2, p.a * p.b / 2 + p.a]));
+DIST['P-E5'] = (p, o) => { const dx = Math.abs(p.x2 - p.x1), dy = Math.abs(p.y2 - p.y1); return _n(o, [dx + dy, Math.abs(dx - dy), p.ans + 1, p.ans - 1, p.ans * p.ans, dx * dy, p.ans + 2, p.ans - 2]); };
+DIST['P-E6'] = (p, o) => _n(o, [p.a + p.b + p.c, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, p.ans * 2, p.ans + 3, p.a * p.b * p.c]);
+DIST['P-E7'] = () => [];
+DIST['P-E8'] = (p, o) => (p.ask ? _n(o, [2 * p.b * p.h, (p.b * p.h) / 2, p.a * p.b, p.a * p.h, p.b * p.h + p.b, p.b * p.h - p.b, p.b * p.h + p.h]) : _n(o, [p.b, p.a, p.a - p.b, p.h + 1, p.h - 1, p.h + 2, p.a + p.b, p.h - 2]));
+DIST['P-M1'] = (p, o) => { const { a, b, C, S, H } = p; return _n(o, [(a + b) * C / 2, (a + b) * H, (a + b) * S / 2, a * H, b * H, p.ans + H, p.ans - H, ((a + b) * H) / 4]); };
+DIST['P-M2'] = (p, o) => { const x = F(+p.x.split('/')[0], +p.x.split('/')[1]), AB = p.AB, BF = p.BF, CF = p.CF; return _n(o, [x.mul(2), F(AB * AB + BF * BF, 2 * AB), F(AB * AB - CF * CF, 2 * AB), CF, F(AB, 2), F(AB * AB + CF * CF, AB * 3), x.add(1), x.add(F(1, 2)), F(CF * CF + BF * BF, 2 * BF)]); };
+DIST['P-M3'] = (p, o) => { const { a, b, c } = p; return _n(o, [F(c, 2), F(a * b, 2), F(a * b, a + b), F(a * a, c), F(b * b, c), F(a * b, c).mul(2), F(a + b, 2), F(a * b, c).add(1)]); };
+DIST['P-M4'] = (p, o) => _n(o, [-p.x, p.x + 1, p.x - 1, p.x * 2, p.x + 2, p.x - 2, p.x * 3], { min: -1e9 });
+DIST['P-M5'] = (p, o) => _n(o, [p.w * p.d, p.w * p.h / 2, p.w * p.h * 2, p.d * p.d - p.w * p.w, p.w * p.h + p.w, (p.w + p.h) * 2, p.w * p.h - p.h]);
+DIST['P-M6'] = (p, o) => _n(o, [3 * p.k, 4 * p.k, 6 * p.k, 5 * p.k + 1, 5 * p.k - 1, 7 * p.k, 5 * p.k + 2, 4 * p.k + 1]);
+DIST['P-M7'] = (p, o) => (p.ask ? _n(o, [p.r * p.r * p.h, (p.r * p.r * p.l) / 3, (2 * p.r * p.r * p.h) / 3, (p.r * p.h) / 3, p.V3 + p.r, p.V3 - p.r, p.V3 * 3 + 1]) : _n(o, [p.l - p.r, p.l, p.r, p.h + 1, p.h - 1, p.h + 2, p.l + p.r]));
+DIST['P-M8'] = (p, o) => _n(o, [p.down, p.p2, p.p1, p.p2 + p.p1, p.ans + 1, p.ans - 1, p.ans + 2, p.q1 - p.q2 + 4]);
+DIST['P-H1'] = (p) => [sq3(p.k) + ' cm²', sq3(2 * p.k) + ' cm²', sq3(4 * p.k * p.k) + ' cm²', sq3(3 * p.k * p.k) + ' cm²', sq3(2 * p.k * p.k) + ' cm²', sq3(p.k * p.k + p.k) + ' cm²', sq2(p.k * p.k) + ' cm²'];
+DIST['P-H2'] = (p, o) => _n(o, [p.a + p.c - p.b, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, p.a + p.b - p.c, p.b + p.c - p.a, p.ans * 2]);
+DIST['P-H3'] = (p, o) => { const { a, b, c } = p, v = p.ask === 'BD' ? F(a * a, c) : F(b * b, c), w = p.ask === 'BD' ? F(b * b, c) : F(a * a, c); return _n(o, [w, F(a * b, c), F(c, 2), v.mul(2), F(a, b).mul(a), v.add(1), v.sub(F(1, 2)), F(c * c, a * a + b * b + 1)]); };
+DIST['P-H4'] = (p, o) => { const { a, b } = p; return _n(o, [F(a * a + b * b, b), F(b, 2), F(b * b - a * a, 2 * b), F(a * a + b * b, 2 * a), F(a * a + b * b, 2 * b).add(1), F(a * a + b * b, 2 * b).sub(1), F(a + b, 2)]); };
+DIST['P-H5'] = (p, o) => _n(o, [p.cnt + 1, p.cnt - 1, p.cnt + 2, p.cnt - 2, p.cnt + 3, p.cnt * 2, p.a + p.b - (p.b - p.a) - 1]);
+DIST['P-H6'] = (p, o) => _n(o, [p.ab + p.cd - p.bc, p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2, p.ab + p.bc - p.cd, p.bc + p.cd - p.ab, p.ans * 2]);
+
+/* ---------- B 확률 ---------- */
+DIST['B-E1'] = (p, o) => { const w1 = ways2(p.s1), w2 = ways2(p.s2); return _n(o, [w1 * w2, p.ans + 1, p.ans - 1, p.ans + 2, 6, p.ans - 2, p.ans + 3]); };
+DIST['B-E2'] = (p, o) => { const { n, m, l, ans } = p; return _n(o, [n + m + l, n * m + l, n * m, ans + n, ans - m, ans + 1, ans - 1, (n + m) * (l || 1)]); };
+DIST['B-E3'] = (p, o) => { const { n, d } = p; return _n(o, [F(n, d - n), F(d - n, d), F(n + 1, d), F(n, d + 1), F(1, d), F(n, d - 1), F(n - 1 || 1, d), F(1, 3)]); };
+DIST['B-E4'] = (p, o) => _n(o, [p.n * p.k, Math.pow(p.n, p.k), Cn(p.n, p.k), p.ans + p.n, p.ans - p.k, p.ans + 1, p.ans - 1]);
+DIST['B-E5'] = (p, o) => { const n = p.n; return _n(o, [n * (n + 1), (n + 1) * (n + 1), n * n - 1, n * (n - 1), 2 * n, n * n + 1, n * n + n - 1]); };
+DIST['B-E6'] = (p, o) => _n(o, [Pn(p.n, p.k), p.n * p.k, p.ans + p.n, p.ans - 1, Cn(p.n + 1, p.k), p.ans + 1, p.ans - 2]);
+DIST['B-E7'] = (p, o) => { const { nn, dd, n } = p; return _n(o, [F(1, dd), F(1, 2), F(n, dd), F(dd - 2, dd), F(nn, dd * 2), F(dd - 1, dd + 1), F(nn - 1, dd)]); };
+DIST['B-E8'] = (p, o) => { const w = p.w; return _n(o, [F(w + 1, 36), F(w - 1, 36), F(w, 11), F(w, 12), F(1, 36), F(w, 6), F(w + 2, 36)]); };
+DIST['B-M1'] = (p, o) => { const n = p.n; return _n(o, [_fact(n - 1), _fact(n), 2 * _fact(n), 2 * _fact(n - 2), p.ans + n, p.ans - n, 2 * _fact(n - 1) + 2]); };
+DIST['B-M2'] = (p, o) => { const n = p.n, e = Math.floor(n / 2); return _n(o, [Pn(n, 3), Pn(n, 3) / 2, e * n * (n - 1), e * (n - 1) * (n - 1), e * Cn(n - 1, 2), p.ans + e, p.ans - e]); };
+DIST['B-M3'] = (p, o) => { const { k, n } = p; return _n(o, [F(k * (k - 1), n * (n - 1)), F(k, n), F(2 * k, n * n), F(k * k, n), F(k * k, n * n - 1), F(2 * k, n), F(k, n * n)]); };
+DIST['B-M4'] = (p, o) => { const { r, b } = p, n = r + b; return _n(o, [F(2 * r * b, n * (n - 1)), F(r * r + b * b, n * n), F(r * (r - 1), n * (n - 1)), F(b * (b - 1), n * (n - 1)), F(1, 2), F(r * b, n * (n - 1)), F(r * (r - 1) + b * (b - 1), n * n)]); };
+DIST['B-M5'] = (p, o) => { const a = F(p.p1, p.q1), b = F(p.p2, p.q2); return _n(o, [a.mul(b), a.add(b), F(1).sub(a).mul(F(1).sub(b)), F(1).sub(a.mul(b)), a.add(b).mul(F(1, 2)), F(1).sub(a), F(1).sub(b), F(1).sub(a.add(b).mul(F(1, 2)))], { min: 0.0001, max: 1 }); };
+DIST['B-M6'] = (p, o) => { const c = p.cnt; return _n(o, [F(c + 1, 36), F(c - 1, 36), F(c, 30), F(c, 12), F(c, 18), F(c + 2, 36), F(c, 6)]); };
+DIST['B-M7'] = (p, o) => { const c = p.cnt; return _n(o, [F(c + 1, 36), F(c - 1, 36), F(c + 2, 36), F(c, 30), F(c, 12), F(c - 2, 36), F(c, 18), F(c, 6)]); };
+DIST['B-M8'] = (p, o) => { const { m, w } = p, n = m + w, tot = Cn(n, 2); return _n(o, [F(Cn(m, 2), tot), F(w, n), F(w * (w - 1), n * (n - 1)), F(m * w, tot), F(tot - Cn(m, 2) - 1, tot), F(tot - Cn(m, 2) + 1, tot), F(Cn(w, 2), tot)], { min: 0.0001, max: 1 }); };
+DIST['B-M9'] = (p, o) => { const { a, b, c } = p; return _n(o, [a + b + c, a * b * c, a * (b + c), (a + b) * c, a * b + c + 1, a * b + c - 1, a + b * c]); };
+DIST['B-H1'] = (p, o) => { const { n, k } = p, t = Cn(n, 3); return _n(o, [t, t - k, t - Cn(k, 3) + 1, t - Cn(k, 2), Pn(n, 3) - Cn(k, 3), t - Cn(k, 3) - 1, t - 3 * Cn(k, 3)]); };
+DIST['B-H2'] = (p, o) => { let all = 0; for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a * b === p.q) all++; const c = p.cnt; return _n(o, [F(all, 36), F(c + 1, 36), F(c + 2, 36), F(c - 1 > 0 ? c - 1 : c + 3, 36), F(c, 12), F(c, 18), F(c * 2, 36)]); };
+DIST['B-H3'] = (p, o) => { const { r1, b1, r2, b2 } = p, n1 = r1 + b1, n2 = r2 + b2; return _n(o, [F(r1 * r2, n1 * n2), F(b1 * b2, n1 * n2), F(r1 * b2 + b1 * r2, n1 * n2), F(1, 2), F(r1 * r2 + b1 * b2, n1 * n2 + 1), F(r1 + r2 + b1 + b2, 2 * (n1 + n2)), F(r1 * r2 + b1 * b2 + 1, n1 * n2)], { min: 0.0001, max: 1 }); };
+DIST['B-H4'] = (p, o) => { const m = p.m; return _n(o, [_fact(m), 2 * _fact(m + 1), _fact(m + 2), 2 * _fact(m) * m, 2 * _fact(m - 1), p.ans + 2, p.ans - 2]); };
+
+/* 모자라면 정답 근처의 값으로 보충 (모든 새 유형의 DIST에 공통 적용) */
+(function () {
+  const near = (o) => {
+    const a = String(o.a); let m = /^(−?)(\d+)([^]*)$/.exec(a);
+    if (m) { const c = +m[2] * (m[1] ? -1 : 1), deg = /^°/.test(m[3]); return _n(o, [c + 1, c - 1, c + 2, c - 2, c + 3, c - 3, c + 5, c - 5, c * 2, c + 10], deg ? { min: 1, max: 179 } : undefined); }
+    m = /^(−?)<span class="fr"><i>(\d+)<\/i><i>(\d+)<\/i><\/span>/.exec(a);
+    if (m) { const n = +m[2], d = +m[3]; return _n(o, [F(n + 1, d), F(n - 1, d), F(n, d + 1), F(n, d - 1), F(n + 2, d), F(n, d + 2), F(n * 2, d), F(n + 1, d + 1)]); }
+    return [];
+  };
+  Object.keys(DIST).forEach((id) => {
+    if (!/^[NEIQTRPB]-/.test(id) || id === 'P-E7') return;
+    const f = DIST[id];
+    DIST[id] = (p, o) => { let r = f(p, o) || []; const seen = new Set(r.map(stripH2)); if (seen.size < 6) r = r.concat(near(o).filter((x) => !seen.has(stripH2(x)))); return r; };
+  });
+})();
+function stripH2(s) { return String(s).replace(/<\/?[a-zA-Z][^>]*>/g, '').replace(/§/g, '').replace(/\s+/g, ' ').trim(); }
+
 
 /* ================= app ================= */
 const $ = (id) => document.getElementById(id);
-const LV = ['하', '중', '상'], UN = { L: '일차함수', S: '닮음·도형' };
+const LV = ['하', '중', '상'];
+/* 중2 교육과정 순서(화면 표시)와 내부 순서(배분·QR 코드: 일차함수, 닮음이 앞) */
+const UNITS = [['N', '유리수와 순환소수', 1], ['E', '식의 계산', 1], ['I', '일차부등식', 1], ['Q', '연립방정식', 1], ['L', '일차함수', 1], ['T', '삼각형의 성질', 2], ['R', '사각형의 성질', 2], ['S', '도형의 닮음', 2], ['P', '피타고라스 정리', 2], ['B', '확률', 2]];
+const UN = {}, UORD = {}; UNITS.forEach((u, i) => { UN[u[0]] = u[1]; UORD[u[0]] = i; });
+const UIN = ['L', 'S', 'N', 'E', 'I', 'Q', 'T', 'R', 'P', 'B'];
+const SEM = { 1: '중2-1', 2: '중2-2' };
 const COLORS = ['#34d399', '#60a5fa', '#f87171'];
 let CUR = null;
 
 function norm(arr) { const s = arr.reduce((a, b) => a + b, 0); return s > 0 ? arr.map((x) => x / s) : arr.map(() => 1 / arr.length); }
+function unitRaw() { return UIN.map((u) => ($('uc_' + u) && $('uc_' + u).checked ? +$('us_' + u).value : 0)); }
 function readCfg() {
   return {
     total: Math.max(1, Math.min(60, parseInt($('total').value) || 20)),
-    u: norm([+$('uL').value, +$('uS').value]),
+    u: norm(unitRaw().some((x) => x > 0) ? unitRaw() : UIN.map(() => 1)),
     l: norm([+$('l0').value, +$('l1').value, +$('l2').value]),
     order: $('order').value, cols: $('cols').value, space: +$('space').value,
     fig: $('showfig').checked, tag: $('showtag').checked, hint: $('showhint').checked, star: $('usestar').checked,
     title: $('title').value || '문제지', seed: parseInt($('seed').value) || 1,
-    raw: [+$('uL').value, +$('uS').value, +$('l0').value, +$('l1').value, +$('l2').value], fraw: [+$('fmc').value, +$('fwr').value], base: ($('baseurl').value || '').trim()
+    raw: unitRaw().concat([+$('l0').value, +$('l1').value, +$('l2').value]), fraw: [+$('fmc').value, +$('fwr').value], base: ($('baseurl').value || '').trim()
   };
 }
 function mcCount(cfg) { const a = cfg.fraw[0], b = cfg.fraw[1]; return a + b > 0 ? Math.round(cfg.total * a / (a + b)) : 0; }
 function allocate(cfg) {
   const cells = [];
-  ['L', 'S'].forEach((u, ui) => [0, 1, 2].forEach((lv) => cells.push({ u, lv, w: cfg.u[ui] * cfg.l[lv] })));
+  UIN.forEach((u, ui) => [0, 1, 2].forEach((lv) => cells.push({ u, lv, w: cfg.u[ui] * cfg.l[lv] })));
   const raw = cells.map((c) => c.w * cfg.total);
   const base = raw.map(Math.floor);
   let rest = cfg.total - base.reduce((a, b) => a + b, 0);
@@ -1153,8 +2725,9 @@ function poolOf(u, lv, cfg) { return BANK.filter((g) => g.u === u && g.lv === lv
 
 function renderControls() {
   const cfg = readCfg();
-  $('uLv').textContent = Math.round(cfg.u[0] * 100) + '%';
-  $('uSv').textContent = Math.round(cfg.u[1] * 100) + '%';
+  UIN.forEach((u, i) => { $('uv_' + u).textContent = unitRaw()[i] > 0 ? Math.round(cfg.u[i] * 100) + '%' : '-'; $('ur_' + u).classList.toggle('off', !(unitRaw()[i] > 0)); });
+  [1, 2].forEach((s) => { const us = UNITS.filter((x) => x[2] === s), n = us.filter((x) => $('uc_' + x[0]).checked).length; $('ug_' + s).checked = n === us.length; $('ug_' + s).indeterminate = n > 0 && n < us.length; });
+  $('unote').textContent = unitRaw().some((x) => x > 0) ? '체크한 단원에서만 출제하고, 막대 값의 비율대로 문항 수를 나눕니다. (피타고라스 정리는 기본으로 해제되어 있습니다.)' : '⚠ 단원을 하나 이상 선택하세요. (지금은 모든 단원에서 고르게 출제됩니다)';
   [0, 1, 2].forEach((i) => { $('l' + i + 'v').textContent = Math.round(cfg.l[i] * 100) + '%'; });
   $('lbar').innerHTML = cfg.l.map((x, i) => '<i style="width:' + (x * 100) + '%;background:' + COLORS[i] + '"></i>').join('');
   $('llegend').textContent = '하 ' + Math.round(cfg.l[0] * 100) + '% · 중 ' + Math.round(cfg.l[1] * 100) + '% · 상 ' + Math.round(cfg.l[2] * 100) + '%';
@@ -1164,7 +2737,7 @@ function renderControls() {
   const cells = allocate(cfg);
   const g = (u, lv) => cells.find((c) => c.u === u && c.lv === lv);
   let h = '<table class="alloc"><tr><th></th><th>하</th><th>중</th><th>상</th><th>합계</th></tr>';
-  ['L', 'S'].forEach((u) => {
+  UNITS.map((x) => x[0]).filter((u) => cfg.u[UIN.indexOf(u)] > 0 && (unitRaw().some((x) => x > 0) || true)).forEach((u) => {
     const sum = [0, 1, 2].reduce((a, lv) => a + g(u, lv).n, 0);
     h += '<tr><th>' + UN[u] + '</th>' + [0, 1, 2].map((lv) => { const c = g(u, lv); const pl = poolOf(u, lv, cfg).length; return '<td>' + c.n + '<div class="note">유형 ' + pl + '</div></td>'; }).join('') + '<td><b>' + sum + '</b></td></tr>';
   });
@@ -1186,17 +2759,18 @@ function buildSet(cfg) {
       const g = bag.pop();
       let out = null;
       for (let t = 0; t < 5 && !out; t++) out = g.g();
-      if (out) items.push({ id: g.id, u: g.u, lv: g.lv, out });
+      if (out) { out.q = fixJosa(out.q); if (out.h) out.h = fixJosa(out.h); items.push({ id: g.id, u: g.u, lv: g.lv, out, noMC: !!g.noMC }); }
     }
   });
   if (cfg.order === 'level') items.sort((a, b) => a.lv - b.lv);
-  else if (cfg.order === 'unit') items.sort((a, b) => (a.u === b.u ? a.lv - b.lv : a.u < b.u ? -1 : 1));
+  else if (cfg.order === 'unit') items.sort((a, b) => (a.u === b.u ? a.lv - b.lv : UORD[a.u] - UORD[b.u]));
   else { const s = shuffle(items); items.length = 0; s.forEach((x) => items.push(x)); }
   const k = mcCount(cfg);
   if (k > 0 && items.length) {
     setSeed(cfg.seed * 7 + 13);
     const kk = Math.min(k, items.length);
-    const idx = shuffle(items.map((_, i) => i)).slice(0, kk);
+    const elig = items.map((_, i) => i).filter((i) => !items[i].noMC), kk2 = Math.min(kk, elig.length);
+    const idx = shuffle(elig).slice(0, kk2);
     idx.forEach((i) => { items[i].mc = makeChoices(items[i]); });
     const mc = items.filter((x) => x.mc), wr = items.filter((x) => !x.mc);
     items.length = 0; mc.concat(wr).forEach((x) => items.push(x));
@@ -1204,37 +2778,72 @@ function buildSet(cfg) {
   return items;
 }
 
+
+/* 조사 자동 보정 : 숫자·영문자 뒤의 을/를·은/는·이/가·와/과, 한글 뒤의 와/과 */
+const _JB = { '0': 1, '1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 1, '8': 1, '9': 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, g: 0, h: 0, i: 0, j: 0, k: 0, l: 1, m: 1, n: 1, o: 0, p: 0, q: 0, r: 1, s: 0, t: 0, u: 0, v: 0, w: 0, x: 0, y: 0, z: 0 };
+function fixJosa(s) {
+  if (!s) return s;
+  const P = { '을': ['을', '를'], '를': ['을', '를'], '은': ['은', '는'], '는': ['은', '는'], '이': ['이', '가'], '가': ['이', '가'], '와': ['과', '와'], '과': ['과', '와'] };
+  s = s.replace(/([0-9A-Za-z])(<\/var>)?(을|를|은|는|이|가|와|과)(?=[\s,.)]|$)/g, (m, ch, tag, j) => { const b = _JB[ch.toLowerCase()]; return ch + (tag || '') + P[j][b ? 0 : 1]; });
+  s = s.replace(/<\/sup>(을|를|은|는|와|과)(?=[\s,.)]|$)/g, (m, j) => '</sup>' + P[j][0]);
+  s = s.replace(/([가-힣])(와|과)(?=\s)/g, (m, ch, j) => { const b = (ch.charCodeAt(0) - 0xAC00) % 28 !== 0; return ch + (b ? '과' : '와'); });
+  s = s.replace(/([가-힣])(을|를)(?=[\s,.)]|$)/g, (m, ch, j) => { const b = (ch.charCodeAt(0) - 0xAC00) % 28 !== 0; return ch + (b ? '을' : '를'); });
+  return s;
+}
 /* ---- 5지선다 보기 만들기 ---- */
-const stripH = (s) => String(s).replace(/<[^>]*>/g, '').replace(/§/g, '').replace(/\s+/g, ' ').trim();
+const stripH = (s) => String(s).replace(/<\/?[a-zA-Z][^>]*>/g, '').replace(/§/g, '').replace(/\s+/g, ' ').trim();
 const numsOf = (s) => (stripH(s).match(/\d+/g) || []).map(Number);
-function mutateAns(html) {
+function mutateAns(html, far) {
   const parts = html.split(/(<[^>]+>)/); const slots = [];
   parts.forEach((pt, pi) => { if (pt[0] === '<') return; const re = /\d+/g; let m; while ((m = re.exec(pt))) slots.push([pi, m.index, m[0]]); });
   if (!slots.length) return null;
   const [pi, ix, ds] = slots[ri(0, slots.length - 1)], n = +ds;
-  const ops = [n + 1, n - 1, n + 2, n - 2, n * 2, n + 10, n - 10, n % 2 === 0 ? n / 2 : n + 3, n + 3, n - 3];
+  const ops = far ? [n * 2, n * 3, n + 7, n + 11, n + 5, n * 2 + 1, n % 2 === 0 ? n / 2 : n + 9, Math.abs(n - 9), n + 13] : [n + 1, n - 1, n + 2, n - 2, n * 2, n + 10, n - 10, n % 2 === 0 ? n / 2 : n + 3, n + 3, n - 3];
   const v = ops[ri(0, ops.length - 1)];
   if (v < 0 || v === n || (v === 0 && n !== 0) || String(v).length > ds.length + 1) return null;
   const pt = parts[pi]; const cp = parts.slice(); cp[pi] = pt.slice(0, ix) + v + pt.slice(ix + ds.length);
   const r = cp.join(''); if (/(^|[^\d])[01]x/.test(stripH(r))) return null; return r;
 }
 function makeChoices(it) {
-  const correct = it.out.a, ck = stripH(correct), seen = new Set([ck]), cands = [];
-  const gen = BANK.find((g) => g.id === it.id);
-  const dist = (a) => { const x = numsOf(a), y = numsOf(correct); let d = 0; for (let i = 0; i < Math.max(x.length, y.length); i++) d += Math.abs(Math.log((x[i] || 0) + 1) - Math.log((y[i] || 0) + 1)); return d; };
-  const add = (a) => { const k = stripH(a); if (!a || seen.has(k)) return; seen.add(k); cands.push(a); };
-  for (let i = 0; i < 40 && cands.length < 10; i++) { const m = mutateAns(correct); if (m) add(m); }
-  { const lm = ck.match(/^y = (−?)x$/); if (lm) ['y = x', 'y = −x', 'y = 2x', 'y = −2x', 'y = 3x', 'y = −3x', 'y = ½x'].forEach((s) => add(s)); }
-  const shape = (s) => stripH(s).replace(/\d+/g, '#');
-  for (let i = 0; i < 12 && gen; i++) { try { const o = gen.g(); if (o && shape(o.a) === shape(correct)) add(o.a); } catch (e) { } }
-  cands.sort((a, b) => dist(a) - dist(b));
-  const pool = cands.slice(0, 8), pick = [];
-  while (pick.length < 4 && pool.length) pick.push(pool.splice(ri(0, pool.length - 1), 1)[0]);
-  const rest = cands.slice(8); while (pick.length < 4 && rest.length) pick.push(rest.shift());
-  for (let n = 1; pick.length < 4 && n < 200; n++) { const m = mutateAns(correct); if (m && !seen.has(stripH(m))) { seen.add(stripH(m)); pick.push(m); } }
-  const pos = ri(0, pick.length), list = pick.slice(0, 4); list.splice(pos, 0, correct);
+  const correct = it.out.a, ck = stripH(correct), seen = new Set([ck]);
+  const shape = (s) => stripH(s).replace(/\d+/g, '#') + (/class="fr"/.test(s) ? 'F' : '');
+  const cs = shape(correct);
+  let raw = [];
+  try { if (typeof DIST !== 'undefined' && DIST[it.id]) raw = DIST[it.id](it.out.p || {}, it.out) || []; } catch (e) { raw = []; }
+  const same = [], other = [];
+  raw.forEach((a) => { if (!a) return; const k = stripH(a); if (seen.has(k)) return; seen.add(k); (shape(a) === cs ? same : other).push(a); });
+  const lev = (a, b) => { const m = a.length, n = b.length, d = []; for (let i = 0; i <= m; i++) { d[i] = [i]; } for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; };
+  /* 정답이 '보기들의 가운데(중앙값·가장 비슷한 것)'로 티 나지 않는 조합을 고른다 */
+  const leaky = (set) => {
+    const all = set.concat([correct]), ks = all.map(stripH);
+    const sums = ks.map((k, i) => ks.reduce((s, o, j) => s + (i === j ? 0 : lev(k, o)), 0));
+    const me = sums[sums.length - 1], others = sums.slice(0, -1);
+    let bad = others.every((s) => s > me);
+    const nums = ks.map((k) => (/^-?\d+(\.\d+)?$/.test(k.replace('−', '-')) ? parseFloat(k.replace('−', '-')) : NaN));
+    if (nums.every((x) => !isNaN(x))) { const srt = nums.slice().sort((a, b) => a - b); if (srt[2] === nums[nums.length - 1]) bad = true; }
+    return bad;
+  };
+  const pool = same.concat(other);
+  let pick4 = [];
+  for (let tr = 0; tr < 80; tr++) {
+    const cand = []; const p1 = same.slice(), p2 = other.slice();
+    while (cand.length < 4 && p1.length) cand.push(p1.splice(ri(0, p1.length - 1), 1)[0]);
+    while (cand.length < 4 && p2.length) cand.push(p2.splice(ri(0, p2.length - 1), 1)[0]);
+    if (tr >= 20 && pool.length > 4) { const q = pool.slice(); cand.length = 0; while (cand.length < 4) cand.push(q.splice(ri(0, q.length - 1), 1)[0]); }
+    pick4 = cand;
+    if (cand.length < 4 || !leaky(cand)) break;
+  }
+  /* 부족하면 정답에서 크게 벗어난 값으로 채운다 */
+  for (let n = 0; pick4.length < 4 && n < 300; n++) {
+    const m = mutateAns(correct, true); if (m && !seen.has(stripH(m))) { seen.add(stripH(m)); pick4.push(m); }
+  }
+  if (/^y = /.test(ck)) for (let n = 0; pick4.length < 4 && n < 300; n++) {
+    const m = lineEq(F(nzr(-4, 4)), F(ri(-9, 9))); if (!seen.has(stripH(m))) { seen.add(stripH(m)); pick4.push(m); }
+  }
+  const pos = ri(0, pick4.length), list = pick4.slice(0, 4); list.splice(pos, 0, correct);
   return { list, ans: pos };
 }
+const nzr = (a, b) => { let v = 0; while (v === 0) v = ri(a, b); return v; };
 const CIRC = ['①', '②', '③', '④', '⑤'];
 
 function sheetHeader(cfg, kind) {
@@ -1283,7 +2892,7 @@ function generate(newSeed) {
   const cfg = readCfg();
   CUR = { cfg, items: buildSet(cfg) };
   render();
-  try { localStorage.setItem('exam2-2', JSON.stringify({ total: cfg.total, uL: $('uL').value, uS: $('uS').value, l0: $('l0').value, l1: $('l1').value, l2: $('l2').value, fmc: $('fmc').value, fwr: $('fwr').value, title: cfg.title, baseurl: $('baseurl').value })); } catch (e) { }
+  try { localStorage.setItem('exam2-2', JSON.stringify({ v: 5, total: cfg.total, uc: UIN.map((u) => ($('uc_' + u).checked ? 1 : 0)), us: UIN.map((u) => $('us_' + u).value), l0: $('l0').value, l1: $('l1').value, l2: $('l2').value, fmc: $('fmc').value, fwr: $('fwr').value, title: cfg.title, baseurl: $('baseurl').value })); } catch (e) { }
 }
 
 function show(which) {
@@ -1294,13 +2903,20 @@ function show(which) {
 }
 
 /* ================= QR · 채점 ================= */
-const BANK_VER = 'b3', ORD = { level: 'l', unit: 'u', mix: 'm' }, ORDR = { l: 'level', u: 'unit', m: 'mix' };
-function payloadOf(cfg) { return ['EX22', BANK_VER, cfg.seed, cfg.total].concat(cfg.raw).concat(cfg.fraw).concat([ORD[cfg.order] || 'l', cfg.star ? 1 : 0]).join('.'); }
+const BANK_VER = 'b5', ORD = { level: 'l', unit: 'u', mix: 'm' }, ORDR = { l: 'level', u: 'unit', m: 'mix' };
+function payloadOf(cfg) { return ['EX22', BANK_VER, cfg.seed, cfg.total, cfg.raw.slice(0, 10).map((x) => Math.round(x).toString(36).padStart(2, '0')).join('')].concat(cfg.raw.slice(10)).concat(cfg.fraw).concat([ORD[cfg.order] || 'l', cfg.star ? 1 : 0]).join('.'); }
 function parsePayload(text) {
   const m = String(text).match(/EX22\.[A-Za-z0-9.]+/); if (!m) return null;
-  const p = m[0].split('.'); if (p.length !== 11 && p.length !== 13) return null;
+  const p = m[0].split('.');
+  if (p.length === 12) {
+    if (!/^[0-9a-z]{20}$/.test(p[4])) return null;
+    const units = []; for (let i = 0; i < 10; i++) units.push(parseInt(p[4].substr(i * 2, 2), 36));
+    const n = [p[2], p[3]].concat(p.slice(5, 10)).map(Number); if (n.some((x) => !isFinite(x))) return null;
+    return { ver: p[1], seed: n[0], total: n[1], units, raw: n.slice(2, 5), fraw: n.slice(5, 7), order: ORDR[p[10]] || 'level', star: p[11] === '1' };
+  }
+  if (p.length !== 11 && p.length !== 13) return null;
   const k = p.length === 13 ? 2 : 0, n = p.slice(2, 9 + k).map(Number); if (n.some((x) => !isFinite(x))) return null;
-  return { ver: p[1], seed: n[0], total: n[1], raw: n.slice(2, 7), fraw: k ? n.slice(7, 9) : [0, 1], order: ORDR[p[9 + k]] || 'level', star: p[10 + k] === '1' };
+  return { ver: p[1], seed: n[0], total: n[1], units: [n[2], n[3], 0, 0, 0, 0, 0, 0, 0, 0], raw: n.slice(4, 7), fraw: k ? n.slice(7, 9) : [0, 1], order: ORDR[p[9 + k]] || 'level', star: p[10 + k] === '1' };
 }
 function qrText(cfg) { const pl = payloadOf(cfg); return cfg.base ? cfg.base.replace(/#.*$/, '') + '#' + pl : pl; }
 function qrSvg(text) {
@@ -1314,7 +2930,8 @@ function qrBox(cfg) { return '<div class="qrbox">' + qrSvg(qrText(cfg)) + '채�
 let GR = { code: '', m: [] }, STREAM = null, SCANNING = false;
 function applyPayload(pl) {
   $('seed').value = pl.seed; $('total').value = pl.total;
-  ['uL', 'uS', 'l0', 'l1', 'l2'].forEach((id, i) => { $(id).value = pl.raw[i]; });
+  UIN.forEach((u, i) => { $('uc_' + u).checked = pl.units[i] > 0; if (pl.units[i] > 0) $('us_' + u).value = pl.units[i]; });
+  ['l0', 'l1', 'l2'].forEach((id, i) => { $(id).value = pl.raw[i]; });
   $('fmc').value = pl.fraw[0]; $('fwr').value = pl.fraw[1];
   $('order').value = pl.order; $('usestar').checked = pl.star;
   renderControls(); generate(false);
@@ -1325,7 +2942,7 @@ function loadCode(text) {
   applyPayload(pl); GR = { code: '', m: [] };
   if (msg) msg.textContent = '';
   show('G');
-  if (pl.ver !== BANK_VER && pl.ver !== 'b2') $('gmsg').textContent = '⚠ 이 문제지는 다른 버전의 프로그램으로 만들어져 문제·정답이 다를 수 있습니다.';
+  if (pl.ver !== BANK_VER && pl.ver !== 'b4' && pl.ver !== 'b2' && !(pl.ver === 'b3' && pl.fraw[0] === 0)) $('gmsg').textContent = '⚠ 이 문제지는 다른 버전의 프로그램으로 만들어져 문제·정답이 다를 수 있습니다.';
   return true;
 }
 function renderGrade() {
@@ -1355,7 +2972,7 @@ function paintGrade() {
   const by = (f, keys, name) => keys.map((k) => { const ix = items.map((it, i) => [it, i]).filter(([it]) => f(it) === k); if (!ix.length) return ''; return name(k) + ' ' + ix.filter(([, i]) => GR.m[i] === 1).length + '/' + ix.length; }).filter(Boolean).join(' · ');
   const wrong = items.map((_, i) => i).filter((i) => GR.m[i] === 0).map((i) => i + 1);
   $('gsum').innerHTML = '<div class="gsum"><span class="big">' + (items.length ? Math.round(ok * 100 / items.length) : 0) + '점</span> <span>(' + ok + ' / ' + items.length + ' 정답 · 채점 ' + done + '문항)</span><br>' +
-    '단원별: ' + by((it) => it.u, ['L', 'S'], (k) => UN[k]) + '<br>난이도별: ' + by((it) => it.lv, [0, 1, 2], (k) => LV[k]) +
+    '단원별: ' + by((it) => it.u, UNITS.map((x) => x[0]), (k) => UN[k]) + '<br>난이도별: ' + by((it) => it.lv, [0, 1, 2], (k) => LV[k]) +
     (wrong.length ? '<br>틀린 문항: ' + wrong.join(', ') + '번' : '') + '</div>';
 }
 function stopScan() { SCANNING = false; if (STREAM) { STREAM.getTracks().forEach((t) => t.stop()); STREAM = null; } const v = $('gvideo'); if (v) { v.classList.remove('on'); v.srcObject = null; } }
@@ -1415,8 +3032,22 @@ function printSheet(which) {
 }
 window.addEventListener('afterprint', () => { document.body.className = ''; });
 
-['total', 'uL', 'uS', 'l0', 'l1', 'l2', 'fmc', 'fwr'].forEach((id) => $(id).addEventListener('input', renderControls));
-['total', 'uL', 'uS', 'l0', 'l1', 'l2', 'fmc', 'fwr'].forEach((id) => $(id).addEventListener('change', () => { renderControls(); generate(false); }));
+(function buildUnitList() {
+  let h = '';
+  [1, 2].forEach((s) => {
+    h += '<div class="ugrp"><label><input type="checkbox" id="ug_' + s + '"> ' + SEM[s] + '</label></div>';
+    UNITS.filter((x) => x[2] === s).forEach((x) => {
+      h += '<div class="urow" id="ur_' + x[0] + '"><label><input type="checkbox" id="uc_' + x[0] + '"' + (x[0] === 'P' ? '' : ' checked') + '> ' + x[1] + '</label><input type="range" id="us_' + x[0] + '" min="0" max="100" value="50"><span class="val" id="uv_' + x[0] + '"></span></div>';
+    });
+  });
+  $('unitList').innerHTML = h;
+})();
+['total', 'l0', 'l1', 'l2', 'fmc', 'fwr'].concat(UIN.map((u) => 'us_' + u)).forEach((id) => $(id).addEventListener('input', renderControls));
+['total', 'l0', 'l1', 'l2', 'fmc', 'fwr'].concat(UIN.map((u) => 'us_' + u), UIN.map((u) => 'uc_' + u)).forEach((id) => $(id).addEventListener('change', () => { renderControls(); generate(false); }));
+[1, 2].forEach((s) => $('ug_' + s).addEventListener('change', () => { UNITS.filter((x) => x[2] === s).forEach((x) => { $('uc_' + x[0]).checked = $('ug_' + s).checked; }); renderControls(); generate(false); }));
+document.querySelectorAll('.chip[data-r]').forEach((c) => c.addEventListener('click', () => {
+  const r = c.dataset.r; UNITS.forEach((x) => { $('uc_' + x[0]).checked = r === 'all' ? true : r === 'none' ? false : x[2] === +r; }); renderControls(); generate(false);
+}));
 ['order', 'cols', 'space', 'showfig', 'showtag', 'showhint', 'usestar', 'title', 'baseurl'].forEach((id) => $(id).addEventListener('change', () => { renderControls(); generate(false); }));
 $('title').addEventListener('input', () => { if (CUR) { CUR.cfg.title = $('title').value || '문제지'; render(); } });
 $('gen').addEventListener('click', () => generate(true));
@@ -1434,7 +3065,7 @@ document.querySelectorAll('.chip[data-p]').forEach((c) => c.addEventListener('cl
 
 try {
   const sv = JSON.parse(localStorage.getItem('exam2-2') || 'null');
-  if (sv) { ['total', 'uL', 'uS', 'l0', 'l1', 'l2', 'fmc', 'fwr', 'title', 'baseurl'].forEach((k) => { if (sv[k] !== undefined) $(k).value = sv[k]; }); }
+  if (sv) { ['total', 'l0', 'l1', 'l2', 'fmc', 'fwr', 'title', 'baseurl'].forEach((k) => { if (sv[k] !== undefined) $(k).value = sv[k]; }); if (sv.v === 5 && sv.uc) UIN.forEach((u, i) => { $('uc_' + u).checked = !!sv.uc[i]; $('us_' + u).value = sv.us[i]; }); }
 } catch (e) { }
 renderControls();
 generate(true);
